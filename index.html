@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="ScopeLens compares an original project agreement with later client requests so freelancers can spot scope creep. Everything stays in your browser.">
+  <!-- Privacy: this policy stops the page from contacting any other site. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>ScopeLens</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#view">Skip to content</a>
+
+  <!-- Monochrome icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7zM14 3v5h5"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+    <symbol id="i-compare" viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-report" viewBox="0 0 24 24"><path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><path d="M3 5h18v4H3zM5 9v10h14V9M10 13h4"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 7.8h.01"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><path d="M9 9h11v11H9zM5 15V5h10"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9M4 4v5h5"/></symbol>
+    <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8M12 16.8h.01"/></symbol>
+  </svg>
+
+  <div class="app">
+    <header class="topbar no-print">
+      <button type="button" id="navToggle" class="icon-btn" data-action="toggle-nav" aria-label="Menu" aria-controls="sidebar" aria-expanded="false">
+        <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-menu"></use></svg>
+      </button>
+      <a class="brand" href="#/"><img src="assets/logo.svg" alt="" width="28" height="28"><span>ScopeLens</span></a>
+    </header>
+
+    <aside class="sidebar no-print" id="sidebar" aria-label="Primary">
+      <a class="brand" href="#/"><img src="assets/logo.svg" alt="" width="30" height="30"><span>ScopeLens</span></a>
+      <p class="tagline">Catch the changes nobody noticed.</p>
+      <nav class="nav" aria-label="Main">
+        <a class="nav-link" href="#/"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-folder"></use></svg>Projects</a>
+        <a class="nav-link" href="#/new"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus"></use></svg>New project</a>
+        <a class="nav-link" href="#/data"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-database"></use></svg>Backup &amp; import</a>
+        <a class="nav-link" href="#/about"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-help"></use></svg>How it works</a>
+      </nav>
+      <p class="side-note">Your projects are saved only in this browser. Nothing is uploaded.</p>
+    </aside>
+    <div class="scrim no-print" data-action="close-nav" hidden></div>
+
+    <main class="main" id="view" tabindex="-1" aria-live="off">
+      <noscript><p class="banner">ScopeLens needs JavaScript to run. It works entirely in your browser and sends nothing anywhere.</p></noscript>
+      <p class="muted">Loading…</p>
+    </main>
+  </div>
+
+  <div id="toasts" class="toasts no-print" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
