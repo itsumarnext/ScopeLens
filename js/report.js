@@ -40,7 +40,7 @@ export const REPORT_CSS = `
 
 const LOGO_SVG = '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1c1c1e"/><circle cx="15" cy="15" r="7" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M20.2 20.2l5 5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M11.5 15h7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>';
 
-export const DISCLAIMER = 'This report is an aid for reviewing project requirements. It was produced by simple, automatic text matching and by notes entered by the user. It is not a legal determination, it does not decide whether any request is covered by the agreement, and it does not state that any additional payment is owed. Items marked “potential” need a human decision.';
+export const DISCLAIMER = 'This report helps you check what was agreed against what is now being asked. It was made by simple word matching and by notes the user wrote. It is not legal advice. It does not say that any request is outside the agreement, or that any extra payment is owed. Items that say “may” need a person to decide.';
 
 /* -------------------------- client message -------------------------- */
 
@@ -53,18 +53,18 @@ export function buildClientMessage(project, comparison) {
   const first = (project.client || '').trim().split(/\s+/)[0];
   const greeting = first ? `Hi ${first},` : 'Hi,';
   const base = project.baseline && comparison.baseline
-    ? `our original project agreement${comparison.baseline.date ? ` (dated ${fmtDate(comparison.baseline.date)})` : ''}`
-    : 'our original project agreement';
+    ? `what we first agreed${comparison.baseline.date ? ` (${fmtDate(comparison.baseline.date)})` : ''}`
+    : 'what we first agreed';
   const items = comparison.findings.filter((f) => f.type !== 'unchanged' && f.status !== 'irrelevant');
-  const what = comparison.mode === 'manual' ? 'the updated scope' : 'the latest requests';
+  const what = comparison.mode === 'manual' ? 'the new version' : 'your latest requests';
 
   if (!items.length) {
-    return `${greeting}\n\nI've reviewed ${what} for ${project.name} against ${base}, and I didn't find anything that appears to go beyond what we agreed. I'll carry on with the agreed deliverables. If you'd like to change or add anything, please let me know and we can talk it through.\n\nThanks.`;
+    return `${greeting}\n\nI've looked at ${what} for ${project.name} and compared them with ${base}. I didn't find anything that seems to go beyond what we agreed, so I'll carry on with the agreed work. If you'd like to change or add anything, just let me know and we can talk it through.\n\nThanks.`;
   }
   const max = 8;
   const list = plainList(items, max);
-  const more = items.length > max ? `\n…and ${items.length - max} more (details in the attached report).` : '';
-  return `${greeting}\n\nI've reviewed ${what} for ${project.name} against ${base}. A few items appear to add functionality, change what was agreed, or need clarification:\n\n${list}${more}\n\nCould we review these together and confirm the expected deliverables, timeline, and any changes to the agreed cost before proceeding? If I've misread anything, or something is already covered by what we agreed, please tell me and I'll update my notes.\n\nThanks.`;
+  const more = items.length > max ? `\n…and ${items.length - max} more (details are in the report).` : '';
+  return `${greeting}\n\nI've looked at ${what} for ${project.name} and compared them with ${base}. A few items seem to add something new, change what we agreed, or need a bit more detail:\n\n${list}${more}\n\nCould we go through these together and confirm what you need, the timeline, and any change to the agreed cost before I start? If I've misunderstood anything, or something is already included in what we agreed, please tell me.\n\nThanks.`;
 }
 
 export const effectiveMessage = (project, comparison) =>
@@ -72,21 +72,21 @@ export const effectiveMessage = (project, comparison) =>
 
 /* ------------------------------ report ------------------------------ */
 
-function findingBlock(f, requests) {
+function findingBlock(f, mode) {
   const rows = [];
+  if (f.updated) rows.push([mode === 'manual' ? 'New version' : 'What the client asked for', f.updated]);
   if (f.original) rows.push(['Original agreement', f.original]);
-  if (f.updated) rows.push([f.type === 'removed' ? 'Request' : 'New or updated', f.updated]);
-  if (f.source && f.source.label) rows.push(['Source', f.source.label]);
-  rows.push(['Why it was flagged (detected)', f.reason + (f.flags && f.flags.length ? ' ' + f.flags.join(' ') : '')]);
-  if (f.related) rows.push(['Related exclusion in original', f.related.text]);
+  if (f.source && f.source.label) rows.push(['Where it came from', f.source.label]);
+  rows.push(['Why it was flagged', f.reason + (f.flags && f.flags.length ? ' ' + f.flags.join(' ') : '')]);
+  if (f.related) rows.push(['The agreement may say this is not included', f.related.text]);
   const statusHtml = `<span class="r-decision ${esc(f.status)}">${esc(STATUS_LABELS[f.status])}</span>`;
-  const noteHtml = f.note ? esc(f.note).replace(/\n/g, '<br>') : '<span class="r-note">No note recorded.</span>';
-  return `<div class="r-finding"><h3>${esc(f.title)}</h3><dl>${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}<dt>Reviewer decision</dt><dd>${statusHtml}</dd><dt>Reviewer note</dt><dd>${noteHtml}</dd></dl></div>`;
+  const noteHtml = f.note ? esc(f.note).replace(/\n/g, '<br>') : '<span class="r-note">No note.</span>';
+  return `<div class="r-finding"><h3>${esc(f.title)}</h3><dl>${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}<dt>Your decision</dt><dd>${statusHtml}</dd><dt>Your note</dt><dd>${noteHtml}</dd></dl></div>`;
 }
 
-function section(title, intro, findings, requests) {
+function section(title, intro, findings, mode) {
   if (!findings.length) return '';
-  return `<h2>${esc(title)} (${findings.length})</h2>${intro ? `<p class="r-note">${esc(intro)}</p>` : ''}${findings.map((f) => findingBlock(f, requests)).join('')}`;
+  return `<h2>${esc(title)} (${findings.length})</h2>${intro ? `<p class="r-note">${esc(intro)}</p>` : ''}${findings.map((f) => findingBlock(f, mode)).join('')}`;
 }
 
 export function buildReportBody(project, comparison, { generatedAt = new Date().toISOString() } = {}) {
@@ -105,59 +105,60 @@ export function buildReportBody(project, comparison, { generatedAt = new Date().
   const meta = [
     ['Project', project.name],
     project.client ? ['Client', project.client] : null,
-    comparison.baseline.date ? ['Original agreement date', fmtDate(comparison.baseline.date)] : null,
-    ['Original scope', `${comparison.baseline.title}${comparison.baseline.revision > 1 ? ` (revision ${comparison.baseline.revision})` : ''}`],
-    budget ? ['Agreed budget (as entered)', budget] : null,
-    ['Comparison date', fmtDateTime(comparison.createdAt)],
-    ['Compared against', comparison.mode === 'manual' ? 'An updated scope pasted by the user' : plural(comparison.requests.length, 'client request')],
+    comparison.baseline.date ? ['Date agreed', fmtDate(comparison.baseline.date)] : null,
+    ['Original agreement', `${comparison.baseline.title}${comparison.baseline.revision > 1 ? ` (version ${comparison.baseline.revision})` : ''}`],
+    budget ? ['Agreed price (as entered)', budget] : null,
+    ['Compared on', fmtDateTime(comparison.createdAt)],
+    ['Compared with', comparison.mode === 'manual' ? 'A new version of the agreement' : plural(comparison.requests.length, 'client request')],
   ].filter(Boolean);
 
   const reqList = comparison.requests.length
-    ? `<h2>Requests included</h2><p class="r-note">“Received” is the date as entered by the user. “Recorded” is when it was entered into ScopeLens. Neither is verified by the original messaging platform.</p><ul class="r-list">${comparison.requests.map((r) =>
-      `<li><strong>Received ${esc(fmtDate(r.date) || 'date not given')}</strong>${r.source ? ` via ${esc(r.source)}` : ''}${r.reference ? ` (${esc(r.reference)})` : ''}; recorded ${esc(fmtDateTime(r.enteredAt))}<br>${esc(truncate(r.text, 220))}</li>`).join('')}</ul>`
+    ? `<h2>Client requests checked</h2><p class="r-note">“Received” is the date the user typed in. “Saved” is when it was added to ScopeLens. Neither date was checked with the email or chat app.</p><ul class="r-list">${comparison.requests.map((r) =>
+      `<li><strong>Received ${esc(fmtDate(r.date) || 'date not given')}</strong>${r.source ? ` by ${esc(r.source)}` : ''}${r.reference ? ` (${esc(r.reference)})` : ''}; saved ${esc(fmtDateTime(r.enteredAt))}<br>${esc(truncate(r.text, 220))}</li>`).join('')}</ul>`
     : '';
 
   const decisionsHtml = decided.length
-    ? `<h2>Confirmed by the reviewer (${decided.length})</h2><p class="r-note">These are the items the reviewer marked as relevant changes. Everything else in this report is a detection that has not been confirmed.</p><ul class="r-list">${decided.map((f) => `<li><strong>${esc(f.title)}</strong>${f.note ? `: ${esc(f.note)}` : ''}</li>`).join('')}</ul>`
-    : `<h2>Confirmed by the reviewer</h2><p class="r-note">No findings have been marked as relevant changes yet. Items below are automatic detections only.</p>`;
+    ? `<h2>What you confirmed (${decided.length})</h2><p class="r-note">These are the items marked “Real change”. Everything else below is only what ScopeLens noticed, and has not been confirmed.</p><ul class="r-list">${decided.map((f) => `<li><strong>${esc(f.title)}</strong>${f.note ? `: ${esc(f.note)}` : ''}</li>`).join('')}</ul>`
+    : `<h2>What you confirmed</h2><p class="r-note">Nothing has been marked “Real change” yet. Everything below is only what ScopeLens noticed.</p>`;
 
   const dismissedHtml = dismissed.length
-    ? `<h2>Reviewed and set aside (${dismissed.length})</h2><p class="r-note">The reviewer marked these as not relevant.</p><ul class="r-list">${dismissed.map((f) => `<li>${esc(f.title)}${f.note ? `: ${esc(f.note)}` : ''}</li>`).join('')}</ul>`
+    ? `<h2>Marked “Not a change” (${dismissed.length})</h2><p class="r-note">These were looked at and set aside.</p><ul class="r-list">${dismissed.map((f) => `<li>${esc(f.title)}${f.note ? `: ${esc(f.note)}` : ''}</li>`).join('')}</ul>`
     : '';
 
   const empty = !live.length
-    ? '<p>No meaningful changes were detected in this comparison. This does not guarantee that nothing changed: the matching is simple and can miss reworded requests.</p>'
+    ? '<p>No changes were found. This does not prove that nothing changed. ScopeLens only matches words, so it can miss a request that uses different words.</p>'
     : '';
 
+  const m = comparison.mode;
   return `<article class="sl-report" aria-label="Change report for ${esc(project.name)}">
 <div class="r-brand">${LOGO_SVG}<span>ScopeLens</span></div>
 <p class="r-tag">Catch the changes nobody noticed.</p>
 <h1>Project change report</h1>
 <dl class="r-meta">${meta.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
 <div class="r-disclaimer"><strong>Please note.</strong> ${esc(DISCLAIMER)}</div>
-<h2>Summary of detected changes</h2>
+<h2>What may have changed</h2>
 <ul class="r-counts">
-<li><strong>${s.additions}</strong>potential additions</li>
-<li><strong>${s.modified}</strong>modified requirements</li>
-<li><strong>${s.removals}</strong>potential removals</li>
-<li><strong>${s.clarify}</strong>awaiting clarification</li>
+<li><strong>${s.additions}</strong>may be new work</li>
+<li><strong>${s.modified}</strong>may change agreed work</li>
+<li><strong>${s.removals}</strong>may be removed</li>
+<li><strong>${s.clarify}</strong>need clarification</li>
 </ul>
-<p class="r-note">${s.reviewed} of ${s.flagged} findings reviewed${s.duplicates ? `; ${plural(s.duplicates, 'possible duplicate')}` : ''}${s.unchanged ? `; ${plural(s.unchanged, 'statement')} appear unchanged` : ''}.</p>
+<p class="r-note">${s.reviewed} of ${s.flagged} results reviewed${s.duplicates ? `; ${s.duplicates} possibly already included` : ''}${s.unchanged ? `; ${plural(s.unchanged, 'point')} with no change` : ''}.</p>
 ${empty}
-<h2>Original scope summary</h2>
-<p class="r-note">${esc(comparison.baseline.title)} contained ${plural(totalStatements, 'statement')}. First statements:</p>
+<h2>The original agreement</h2>
+<p class="r-note">“${esc(comparison.baseline.title)}” has ${plural(totalStatements, 'point')}. The first ones:</p>
 <ul class="r-list">${excerpt.map((x) => `<li>${esc(truncate(x.text, 200))}</li>`).join('')}${totalStatements > excerpt.length ? `<li class="r-note">…and ${totalStatements - excerpt.length} more.</li>` : ''}</ul>
 ${reqList}
 ${decisionsHtml}
-${section('Potentially new requirements', 'Detected: no statement in the original scope appears to cover these. They may still be covered by the agreement.', pick('new'), comparison.requests)}
-${section('Modified requirements', 'Detected: these appear to change or overlap with something in the original scope.', pick('modified'), comparison.requests)}
-${section('Potentially removed requirements', 'Detected: these original items appear to have been dropped or replaced.', pick('removed'), comparison.requests)}
-${section('Possible duplicates', 'Detected: these appear to repeat something already covered.', pick('duplicate'), comparison.requests)}
-${section('Findings requiring clarification', 'These were marked for clarification by the reviewer, or the wording is too vague to classify.', clarify, comparison.requests)}
+${section('May be new work', 'Nothing in the original agreement seems to cover these. They may still be included.', pick('new'), m)}
+${section('May change agreed work', 'These seem to change, or are similar to, something already agreed.', pick('modified'), m)}
+${section('May be removed', 'These parts of the agreement seem to have been dropped or replaced.', pick('removed'), m)}
+${section('Possibly already included', 'These seem to repeat something that is already covered.', pick('duplicate'), m)}
+${section('Needs clarification', 'These were marked “Ask the client”, or the wording is too vague to tell what is meant.', clarify, m)}
 ${dismissedHtml}
-<h2>Suggested message to the client</h2>
+<h2>Message to the client</h2>
 <div class="r-message">${esc(effectiveMessage(project, comparison))}</div>
-<p class="r-foot">Generated by ScopeLens on ${esc(fmtDateTime(generatedAt))}. Based on text pasted or typed by the user; request dates are as entered and were not verified by any messaging platform. Stored only in the user's browser.</p>
+<p class="r-foot">Made with ScopeLens on ${esc(fmtDateTime(generatedAt))}. Based on text the user pasted or typed. Dates are the ones the user entered and were not checked with any email or chat app. Saved only in the user's browser.</p>
 </article>`;
 }
 

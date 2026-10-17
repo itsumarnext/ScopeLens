@@ -19,19 +19,19 @@ const HISTORY_LABELS = {
   project_updated: 'Project details changed',
   project_archived: 'Project archived',
   project_restored: 'Project restored',
-  baseline_created: 'Original scope saved',
-  baseline_revised: 'Original scope revised',
-  request_added: 'Request added',
-  request_edited: 'Request edited',
-  request_deleted: 'Request deleted',
-  comparison_run: 'Comparison generated',
+  baseline_created: 'Original agreement saved',
+  baseline_revised: 'Original agreement changed',
+  request_added: 'Client request added',
+  request_edited: 'Client request edited',
+  request_deleted: 'Client request deleted',
+  comparison_run: 'Comparison done',
   comparison_deleted: 'Comparison deleted',
-  finding_reviewed: 'Finding reviewed',
-  note_saved: 'Note recorded',
-  message_edited: 'Client message edited',
-  report_exported: 'Report exported',
-  data_exported: 'Project data exported',
-  demo_loaded: 'Demo data loaded',
+  finding_reviewed: 'Result reviewed',
+  note_saved: 'Note saved',
+  message_edited: 'Message to client edited',
+  report_exported: 'Report shared or saved',
+  data_exported: 'Project backup downloaded',
+  demo_loaded: 'Sample project loaded',
 };
 export const historyLabel = (type) => HISTORY_LABELS[type] || 'Activity';
 
@@ -48,16 +48,16 @@ export function validateProjectFields(raw = {}) {
     currency: cleanString(raw.currency, 10) || 'INR',
   };
   if (!values.name) errors.name = 'Enter a project name.';
-  else if (values.name.length > 120) errors.name = 'Keep the project name under 120 characters.';
-  if (values.client.length > 120) errors.client = 'Keep the client name under 120 characters.';
-  if (values.description.length > 1000) errors.description = 'Keep the description under 1,000 characters.';
-  if (values.startDate && !isValidDateString(values.startDate)) errors.startDate = 'Enter a valid date.';
+  else if (values.name.length > 120) errors.name = 'Use 120 letters or fewer for the project name.';
+  if (values.client.length > 120) errors.client = 'Use 120 letters or fewer for the client name.';
+  if (values.description.length > 1000) errors.description = 'Use 1,000 letters or fewer for the description.';
+  if (values.startDate && !isValidDateString(values.startDate)) errors.startDate = 'Enter a real date.';
   if (values.budget !== '') {
     const n = Number(values.budget);
-    if (!Number.isFinite(n) || n < 0) errors.budget = 'Enter a budget of zero or more, using numbers only.';
-    else if (n > 1e12) errors.budget = 'That budget is too large.';
+    if (!Number.isFinite(n) || n < 0) errors.budget = 'Enter a number, like 45000.';
+    else if (n > 1e12) errors.budget = 'That number is too big.';
   }
-  if (!CURRENCIES.includes(values.currency)) errors.currency = 'Choose a currency from the list.';
+  if (!CURRENCIES.includes(values.currency)) errors.currency = 'Pick a currency from the list.';
   return { errors, values, ok: Object.keys(errors).length === 0 };
 }
 
@@ -121,14 +121,14 @@ export function validateBaselineFields(raw = {}) {
   const errors = {};
   const text = typeof raw.text === 'string' ? raw.text.replace(/\r\n?/g, '\n') : '';
   const values = {
-    title: cleanString(raw.title, 200) || 'Original scope',
+    title: cleanString(raw.title, 200) || 'Original agreement',
     date: cleanString(raw.date, 20),
     text: text.trim(),
   };
-  if (!values.text) errors.text = 'Paste the original scope text before saving.';
-  else if (values.text.length > LIMITS.maxChars) errors.text = `That text is too long. The limit is ${LIMITS.maxChars.toLocaleString()} characters.`;
-  if (values.title.length > 120) errors.title = 'Keep the title under 120 characters.';
-  if (values.date && !isValidDateString(values.date)) errors.date = 'Enter a valid date.';
+  if (!values.text) errors.text = 'Paste the agreement text before saving.';
+  else if (values.text.length > LIMITS.maxChars) errors.text = `That text is too long. The limit is ${LIMITS.maxChars.toLocaleString()} letters.`;
+  if (values.title.length > 120) errors.title = 'Use 120 letters or fewer for the title.';
+  if (values.date && !isValidDateString(values.date)) errors.date = 'Enter a real date.';
   return { errors, values, ok: Object.keys(errors).length === 0 };
 }
 
@@ -139,10 +139,10 @@ export function saveBaseline(project, values) {
     if (b.text === values.text && b.title === values.title && b.date === values.date) return { project, changed: false };
     project.baselineRevisions.push({ title: b.title, date: b.date, text: b.text, savedAt: b.updatedAt });
     project.baseline = { ...values, createdAt: b.createdAt, updatedAt: now };
-    addHistory(project, 'baseline_revised', `Original scope revised (revision ${project.baselineRevisions.length + 1}). The previous version was kept.`);
+    addHistory(project, 'baseline_revised', `Original agreement changed. The old version was kept (version ${project.baselineRevisions.length}).`);
   } else {
     project.baseline = { ...values, createdAt: now, updatedAt: now };
-    addHistory(project, 'baseline_created', 'Original scope saved as the baseline.');
+    addHistory(project, 'baseline_created', 'Original agreement saved.');
   }
   touch(project);
   return { project, changed: true };
@@ -160,9 +160,9 @@ export function validateRequestFields(raw = {}) {
     reference: cleanString(raw.reference, 300),
     notes: cleanString(raw.notes, 3000),
   };
-  if (!values.text) errors.text = 'Paste or type the client request.';
-  else if (values.text.length > 8000) errors.text = 'That request is too long. Keep it under 8,000 characters.';
-  if (!values.date) errors.date = 'Enter the date the request was received.';
+  if (!values.text) errors.text = 'Add what the client asked for.';
+  else if (values.text.length > 8000) errors.text = 'That request is too long. Use 8,000 letters or fewer.';
+  if (!values.date) errors.date = 'Enter the date you received it.';
   else if (!isValidDateString(values.date)) errors.date = 'Enter a valid date.';
   return { errors, values, ok: Object.keys(errors).length === 0 };
 }
@@ -176,7 +176,7 @@ export function addRequest(project, values) {
   const now = nowISO();
   const r = { id: uid(), ...values, createdAt: now, updatedAt: now };
   project.requests.push(r);
-  addHistory(project, 'request_added', `Request added: “${truncate(r.text, 90)}”`, {
+  addHistory(project, 'request_added', `Client request added: “${truncate(r.text, 90)}”`, {
     requestId: r.id, receivedDate: r.date, source: r.source,
   });
   touch(project);
@@ -190,7 +190,7 @@ export function updateRequest(project, id, values) {
   Object.assign(r, values);
   if (changed) {
     r.updatedAt = nowISO();
-    addHistory(project, 'request_edited', `Request edited: “${truncate(r.text, 90)}”`, { requestId: r.id, receivedDate: r.date, source: r.source });
+    addHistory(project, 'request_edited', `Client request edited: “${truncate(r.text, 90)}”`, { requestId: r.id, receivedDate: r.date, source: r.source });
     touch(project);
   }
   return r;
@@ -200,7 +200,7 @@ export function deleteRequest(project, id) {
   const r = project.requests.find((x) => x.id === id);
   if (!r) return false;
   project.requests = project.requests.filter((x) => x.id !== id);
-  addHistory(project, 'request_deleted', `Request deleted: “${truncate(r.text, 90)}”. Earlier comparisons keep their own copy.`, { requestId: id });
+  addHistory(project, 'request_deleted', `Client request deleted: “${truncate(r.text, 90)}”. Earlier comparisons keep their own copy.`, { requestId: id });
   touch(project);
   return true;
 }
@@ -209,18 +209,18 @@ export function deleteRequest(project, id) {
 
 export function runComparison(project, { mode, requestIds = [], manualText = '' }) {
   if (!project.baseline || !project.baseline.text.trim()) {
-    return { ok: false, error: 'Save the original scope first. It is the baseline for every comparison.' };
+    return { ok: false, error: 'Add the original agreement first. Every comparison starts from it.' };
   }
   let reqs = [];
   let manual = '';
   if (mode === 'manual') {
     manual = String(manualText || '').replace(/\r\n?/g, '\n').trim();
-    if (!manual) return { ok: false, error: 'Paste the updated scope to compare against the original.', field: 'manualText' };
-    if (manual.length > LIMITS.maxChars) return { ok: false, error: `The updated scope is too long. The limit is ${LIMITS.maxChars.toLocaleString()} characters.`, field: 'manualText' };
+    if (!manual) return { ok: false, error: 'Paste the new version of the agreement.', field: 'manualText' };
+    if (manual.length > LIMITS.maxChars) return { ok: false, error: `That text is too long. The limit is ${LIMITS.maxChars.toLocaleString()} letters.`, field: 'manualText' };
   } else {
     mode = 'requests';
     reqs = sortedRequests(project).filter((r) => requestIds.includes(r.id));
-    if (!reqs.length) return { ok: false, error: 'Select at least one client request to include.', field: 'requests' };
+    if (!reqs.length) return { ok: false, error: 'Choose at least one client request.', field: 'requests' };
   }
 
   const result = compareScope({
@@ -265,9 +265,9 @@ export function runComparison(project, { mode, requestIds = [], manualText = '' 
 
   const s = summarizeFindings(comparison.findings);
   addHistory(project, 'comparison_run',
-    `Comparison generated (${mode === 'manual' ? 'against a pasted updated scope' : plural(reqs.length, 'request')}): ` +
-    `${plural(s.additions, 'potential addition')}, ${plural(s.modified, 'modified requirement')}, ${plural(s.removals, 'potential removal')}, ${s.clarify} awaiting clarification.` +
-    (carried ? ` ${plural(carried, 'earlier decision')} carried over.` : ''),
+    `Comparison done (${mode === 'manual' ? 'against a new version of the agreement' : plural(reqs.length, 'client request')}): ` +
+    `${s.additions} may be new work, ${s.modified} may change agreed work, ${s.removals} may be removed, ${s.clarify} need clarification.` +
+    (carried ? ` ${plural(carried, 'earlier choice')} kept from the last comparison.` : ''),
     { comparisonId: comparison.id });
   touch(project);
   return { ok: true, comparison, carried };
@@ -292,7 +292,7 @@ export function setFindingStatus(project, comparison, findingId, status) {
   f.status = status;
   addHistory(project, 'finding_reviewed',
     status === 'pending'
-      ? `Review cleared for “${truncate(f.title, 70)}”.`
+      ? `Cleared your choice for “${truncate(f.title, 70)}”.`
       : `Marked “${truncate(f.title, 70)}” as: ${STATUS_LABELS[status]}.`,
     { comparisonId: comparison.id, findingId, status });
   touch(project);
@@ -307,7 +307,7 @@ export function setFindingNote(project, comparison, findingId, note) {
   const had = !!f.note;
   f.note = clean;
   addHistory(project, 'note_saved',
-    clean ? `${had ? 'Updated' : 'Added'} note on “${truncate(f.title, 70)}”.` : `Removed note from “${truncate(f.title, 70)}”.`,
+    clean ? `${had ? 'Changed' : 'Added'} a note on “${truncate(f.title, 70)}”.` : `Removed the note on “${truncate(f.title, 70)}”.`,
     { comparisonId: comparison.id, findingId });
   touch(project);
   return f;
@@ -316,7 +316,7 @@ export function setFindingNote(project, comparison, findingId, note) {
 export function setMessage(project, comparison, text) {
   comparison.message = String(text ?? '').slice(0, 10000);
   comparison.messageEdited = true;
-  addHistory(project, 'message_edited', 'Suggested client message edited.', { comparisonId: comparison.id });
+  addHistory(project, 'message_edited', 'Message to the client was edited.', { comparisonId: comparison.id });
   touch(project);
 }
 
@@ -327,12 +327,12 @@ export function resetMessage(comparison) {
 
 export function logExport(project, comparison, kind) {
   comparison.exports.push({ at: nowISO(), kind });
-  addHistory(project, 'report_exported', `Report exported (${kind}).`, { comparisonId: comparison.id, kind });
+  addHistory(project, 'report_exported', `Report saved or shared (${kind}).`, { comparisonId: comparison.id, kind });
   touch(project);
 }
 
 export function logDataExport(project) {
-  addHistory(project, 'data_exported', 'Project data exported as a JSON backup.');
+  addHistory(project, 'data_exported', 'Project backup downloaded.');
   touch(project);
 }
 
@@ -340,22 +340,22 @@ export function logDataExport(project) {
 
 export function comparisonSummaryText(comparison) {
   const s = summarizeFindings(comparison.findings);
-  if (!s.flagged) return 'No meaningful changes detected';
+  if (!s.flagged) return 'No changes found';
   const bits = [];
-  if (s.additions) bits.push(plural(s.additions, 'potential addition'));
-  if (s.modified) bits.push(`${s.modified} modified`);
-  if (s.removals) bits.push(plural(s.removals, 'potential removal'));
-  if (s.ambiguous) bits.push(`${s.ambiguous} ambiguous`);
-  if (s.duplicates) bits.push(plural(s.duplicates, 'possible duplicate'));
+  if (s.additions) bits.push(`${s.additions} may be new work`);
+  if (s.modified) bits.push(`${s.modified} may change agreed work`);
+  if (s.removals) bits.push(`${s.removals} may be removed`);
+  if (s.ambiguous) bits.push(`${s.ambiguous} unclear`);
+  if (s.duplicates) bits.push(`${s.duplicates} possibly already included`);
   return bits.join(' · ');
 }
 
 export function projectStatusLine(project) {
   const c = latestComparison(project);
-  if (c) return `Last comparison ${fmtDate(c.createdAt)}: ${comparisonSummaryText(c)}`;
-  if (!project.baseline) return 'No original scope saved yet';
-  if (!project.requests.length) return 'Baseline saved. No client requests logged yet';
-  return `Baseline saved · ${plural(project.requests.length, 'request')} logged · not compared yet`;
+  if (c) return `Last compared ${fmtDate(c.createdAt)}: ${comparisonSummaryText(c)}`;
+  if (!project.baseline) return 'No agreement added yet';
+  if (!project.requests.length) return 'Agreement added. No client requests yet';
+  return `Agreement added · ${plural(project.requests.length, 'client request')} · not compared yet`;
 }
 
 export function searchProjects(projects, query) {
@@ -371,7 +371,7 @@ export function exportEnvelope(projects) {
     app: 'ScopeLens',
     schema: SCHEMA_VERSION,
     exportedAt: nowISO(),
-    note: 'ScopeLens backup. Plain, unencrypted JSON: store it somewhere safe and private.',
+    note: 'ScopeLens backup. This is a plain, unlocked file. Keep it somewhere safe and private.',
     projects,
   };
 }
@@ -409,9 +409,9 @@ function sanitizeFinding(f) {
 }
 
 function sanitizeProject(raw) {
-  if (!isObj(raw)) return { error: 'Entry is not an object.' };
+  if (!isObj(raw)) return { error: 'It is not a project.' };
   const name = cleanString(raw.name, 120);
-  if (!name) return { error: 'Entry has no project name.' };
+  if (!name) return { error: 'It has no project name.' };
   const now = nowISO();
   const budgetNum = raw.budget === '' || raw.budget == null ? '' : Number(raw.budget);
   const p = {
@@ -437,7 +437,7 @@ function sanitizeProject(raw) {
   const mkScope = (b) => {
     if (!isObj(b) || typeof b.text !== 'string' || !b.text.trim()) return null;
     return {
-      title: cleanString(b.title, 200) || 'Original scope',
+      title: cleanString(b.title, 200) || 'Original agreement',
       date: dateOrEmpty(b.date),
       text: b.text.slice(0, LIMITS.maxChars),
     };
@@ -481,7 +481,7 @@ function sanitizeProject(raw) {
         createdAt: isoOrNow(c.createdAt),
         mode: c.mode === 'manual' ? 'manual' : 'requests',
         baseline: {
-          title: cleanString(c.baseline?.title, 200) || 'Original scope',
+          title: cleanString(c.baseline?.title, 200) || 'Original agreement',
           date: dateOrEmpty(c.baseline?.date),
           revision: Number.isInteger(c.baseline?.revision) ? c.baseline.revision : 1,
         },
@@ -528,18 +528,18 @@ export function validateImport(data) {
   const errors = [];
   const warnings = [];
   const projects = [];
-  if (!isObj(data)) return { projects, errors: ['This file is not a ScopeLens backup (the top level is not an object).'], warnings };
-  if (data.app !== 'ScopeLens') return { projects, errors: ['This file does not look like a ScopeLens backup (missing app marker).'], warnings };
-  if (typeof data.schema !== 'number' || data.schema < 1) return { projects, errors: ['This backup has no valid version number.'], warnings };
-  if (data.schema > SCHEMA_VERSION) return { projects, errors: [`This backup was made by a newer version of ScopeLens (format ${data.schema}). Update the app and try again.`], warnings };
-  if (!Array.isArray(data.projects)) return { projects, errors: ['This backup contains no projects list.'], warnings };
-  if (data.projects.length > 500) warnings.push('Only the first 500 projects were read.');
+  if (!isObj(data)) return { projects, errors: ['This is not a ScopeLens backup file.'], warnings };
+  if (data.app !== 'ScopeLens') return { projects, errors: ['This does not look like a ScopeLens backup file.'], warnings };
+  if (typeof data.schema !== 'number' || data.schema < 1) return { projects, errors: ['This backup file is missing its version number.'], warnings };
+  if (data.schema > SCHEMA_VERSION) return { projects, errors: [`This backup was made by a newer version of ScopeLens. Update the app and try again.`], warnings };
+  if (!Array.isArray(data.projects)) return { projects, errors: ['This backup file has no projects in it.'], warnings };
+  if (data.projects.length > 500) warnings.push('Only the first 500 projects were restored.');
   data.projects.slice(0, 500).forEach((raw, i) => {
     const r = sanitizeProject(raw);
     if (r.error) warnings.push(`Skipped project ${i + 1}: ${r.error}`);
     else projects.push(r.project);
   });
-  if (!projects.length && !errors.length) errors.push('No valid projects were found in this file.');
+  if (!projects.length && !errors.length) errors.push('No usable projects were found in this file.');
   return { projects, errors, warnings };
 }
 
@@ -547,7 +547,7 @@ export function validateImport(data) {
 export function prepareImported(project, existingIds) {
   if (existingIds.has(project.id)) {
     project.id = uid();
-    project.name = `${project.name} (imported copy)`.slice(0, 140);
+    project.name = `${project.name} (restored copy)`.slice(0, 140);
   }
   existingIds.add(project.id);
   return project;
@@ -557,21 +557,21 @@ export function prepareImported(project, existingIds) {
 
 export function buildDemoProject() {
   const p = newProject({
-    name: 'Sunrise Bakery website (demo)',
-    client: 'Sample client (demo)',
-    description: 'Demo data so you can try ScopeLens. Remove it any time from Backup & import.',
+    name: 'Sunrise Bakery website (sample)',
+    client: 'Sample client',
+    description: 'A made-up project so you can try ScopeLens. You can remove it any time from the Backups page.',
     startDate: offsetDate(-30),
     budget: '45000',
     currency: 'INR',
   });
   p.isDemo = true;
   p.history = [];
-  addHistory(p, 'demo_loaded', 'Demo project loaded. All text in it is made up.');
+  addHistory(p, 'demo_loaded', 'Sample project loaded. Everything in it is made up.');
   saveBaseline(p, {
-    title: 'Website proposal, signed',
+    title: 'Signed website proposal',
     date: offsetDate(-28),
     text: [
-      'Deliverables:',
+      'Work to be delivered:',
       '- A 5-page responsive website: Home, About, Menu, Gallery and Contact.',
       '- The contact page will include a contact form with name, email and message fields.',
       '- Menu items will be supplied by the client and entered by the developer, up to 30 items.',

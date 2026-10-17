@@ -16,19 +16,19 @@ export const LIMITS = { maxChars: 60000, maxStatements: 1500, dpCells: 16000000 
 export const FINDING_TYPES = ['new', 'modified', 'removed', 'ambiguous', 'duplicate', 'unchanged'];
 
 export const TYPE_LABELS = {
-  new: 'Potentially new requirement',
-  modified: 'Modified requirement',
-  removed: 'Potentially removed requirement',
-  ambiguous: 'Ambiguous change',
-  duplicate: 'Possible duplicate',
-  unchanged: 'Unchanged requirement',
+  new: 'May be new work',
+  modified: 'May change agreed work',
+  removed: 'May be removed',
+  ambiguous: 'Unclear request',
+  duplicate: 'Possibly already included',
+  unchanged: 'No change',
 };
 
 export const STATUS_LABELS = {
-  pending: 'Not reviewed',
-  relevant: 'Relevant change',
-  irrelevant: 'Not relevant',
-  clarify: 'Needs clarification',
+  pending: 'Not reviewed yet',
+  relevant: 'Real change',
+  irrelevant: 'Not a change',
+  clarify: 'Ask the client',
 };
 
 /* ------------------------------------------------------------------ */
@@ -343,11 +343,11 @@ function describeChange(a, b) {
   const flags = [];
   const nums = (arr) => arr.filter((w) => /\d/.test(w) || NUMBER_WORDS[w] || ['twice', 'double', 'triple', 'once'].includes(w));
   if (nums(del).length || nums(add).length) {
-    flags.push(`Numbers or quantities differ (${nums(del).join(', ') || 'none'} → ${nums(add).join(', ') || 'none'}).`);
+    flags.push(`Numbers are different (${nums(del).join(', ') || 'none'} → ${nums(add).join(', ') || 'none'}).`);
   }
-  if (all.some((w) => NEGATION.has(w))) flags.push('Wording about exclusions or negation changed (e.g. not / without / except).');
-  if (all.some((w) => MODAL.has(w))) flags.push('Obligation wording changed (e.g. must / should / may / optional).');
-  if (all.some((w) => BREADTH.has(w))) flags.push('Wording about breadth or limits changed (e.g. all / any / unlimited / additional / up to).');
+  if (all.some((w) => NEGATION.has(w))) flags.push('Words like “not”, “without” or “except” have changed.');
+  if (all.some((w) => MODAL.has(w))) flags.push('Words like “must”, “should”, “may” or “optional” have changed.');
+  if (all.some((w) => BREADTH.has(w))) flags.push('Words about limits have changed (like “all”, “any”, “unlimited” or “up to”).');
   return { diff: d, del, add, meaningful, flags };
 }
 
@@ -387,10 +387,10 @@ function applyWording(f, prepared) {
   // Adds vague-wording notes; may reclassify a short, vague "new" statement as ambiguous.
   if (!prepared || !prepared.vague.length) return f;
   const shortText = (prepared.text.match(/\S+/g) || []).length < 8;
-  f.flags.push(`Possibly vague wording: ${prepared.vague.map((v) => `“${v}”`).join(', ')}. Worth confirming exactly what is meant.`);
+  f.flags.push(`Unclear wording: ${prepared.vague.map((v) => `“${v}”`).join(', ')}. Ask the client what exactly they mean.`);
   if (f.type === 'new' && (prepared.question || shortText)) {
     f.type = 'ambiguous';
-    f.reason = 'Reads as a request, but the wording is vague, so it is unclear what would actually change.';
+    f.reason = 'This looks like a request, but it is too vague to tell what would change.';
     f.confidence = 'low';
   }
   return f;
@@ -463,18 +463,18 @@ function pairFinding(o, u, sim, weak, source) {
   if (ch.diff.identical) {
     return makeFinding({
       type: 'unchanged', original: o.text, updated: u.text, similarity: 1, confidence: 'high', source,
-      reason: ch.diff.formattingOnly ? 'Only formatting, capitalisation or punctuation differs.' : 'Identical wording.',
+      reason: ch.diff.formattingOnly ? 'Only capital letters, punctuation or spacing are different.' : 'The wording is the same.',
     });
   }
   if (!ch.meaningful && !weak) {
     return makeFinding({
       type: 'unchanged', original: o.text, updated: u.text, similarity: sim, confidence: 'high', source,
-      reason: 'Only minor connecting words differ (for example “the”, “of”, “to”). The meaning appears unchanged.',
+      reason: 'Only small joining words are different (like “the” or “of”). The meaning looks the same.',
     });
   }
-  const parts = [`${weak ? 'Possible rewrite — low confidence. ' : ''}Wording changed (${pct(sim)} keyword overlap).`];
-  if (ch.del.length) parts.push(`Removed: “${listWords(ch.del)}”.`);
-  if (ch.add.length) parts.push(`Added: “${listWords(ch.add)}”.`);
+  const parts = [weak ? `This may be a rewrite, but we are not sure (about ${pct(sim)} of the key words match).` : `The wording is different (about ${pct(sim)} of the key words match).`];
+  if (ch.del.length) parts.push(`Words taken out: “${listWords(ch.del)}”.`);
+  if (ch.add.length) parts.push(`Words added: “${listWords(ch.add)}”.`);
   return applyWording(makeFinding({
     type: 'modified', original: o.text, updated: u.text, similarity: sim, confidence: weak ? 'low' : confidenceFor(sim),
     reason: parts.join(' '), flags: ch.flags, source, diff: ch.diff.chunks,
@@ -495,7 +495,7 @@ function compareManual(origText, updText) {
       at: i - 0.5,
       f: makeFinding({
         type: 'removed', original: O[i].text, updated: '', confidence: 'medium',
-        reason: 'No corresponding statement was found in the updated text. It may have been removed, merged into another statement, or reworded beyond recognition.',
+        reason: 'This is not in the new version. It may have been taken out, joined with another point, or reworded a lot.',
         closest: closestInfo(O[i], U),
       }),
     });
@@ -515,12 +515,12 @@ function compareManual(origText, updText) {
       if (s >= 0.8 && (!dup || s > dup.sim)) dup = { sim: s, text: x.text };
     });
     if (dup) {
-      order.push({ at: j, f: makeFinding({ type: 'duplicate', original: dup.text, updated: u.text, similarity: dup.sim, confidence: confidenceFor(dup.sim), reason: `Closely matches another statement (${pct(dup.sim)} keyword overlap). It may repeat something already covered.` }) });
+      order.push({ at: j, f: makeFinding({ type: 'duplicate', original: dup.text, updated: u.text, similarity: dup.sim, confidence: confidenceFor(dup.sim), reason: `This is very close to another point (about ${pct(dup.sim)} match). It may repeat something that is already covered.` }) });
       continue;
     }
     const f = makeFinding({
       type: 'new', updated: u.text, confidence: 'medium',
-      reason: 'No corresponding statement was found in the original scope.',
+      reason: 'This is not in the original agreement.',
       closest: closestInfo(u, O), related: relatedExclusion(u, O),
     });
     order.push({ at: j, f: applyWording(f, u) });
@@ -532,7 +532,7 @@ function compareManual(origText, updText) {
 
 function figureFlags(requestText, originalText) {
   const figs = [...new Set(requestText.match(/\d[\d,.]*%?/g) || [])].map((n) => n.replace(/[.,]$/, '')).filter((n) => n && !originalText.includes(n));
-  return figs.length ? [`The request mentions figures that are not in the original statement: ${figs.join(', ')}.`] : [];
+  return figs.length ? [`The request mentions numbers that are not in the agreement: ${figs.join(', ')}.`] : [];
 }
 
 function bestByContainment(set, O, minContainment) {
@@ -574,12 +574,12 @@ function compareWithRequests(origText, requests) {
           findings.push(applyWording(makeFinding({
             type: 'removed', original: O[hit.i].text, updated: display, title: `Remove: ${O[hit.i].text}`, source,
             confidence: hit.c === 1 ? 'medium' : 'low', similarity: hit.d,
-            reason: 'The request contains removal wording and mentions terms found in this original statement. The closest match is shown — please check it is the item meant.',
+            reason: 'The request says to remove or drop something, and uses words from this part of the agreement. Please check that this is the right item.',
           }), r));
         } else {
           findings.push(makeFinding({
             type: 'ambiguous', updated: display, title: display, source, confidence: 'low',
-            reason: 'The request suggests removing or dropping something, but no original statement clearly matches. Confirm what is being removed.',
+            reason: 'The request seems to remove or drop something, but nothing in the agreement clearly matches. Ask the client what they mean.',
           }));
         }
         continue;
@@ -593,7 +593,7 @@ function compareWithRequests(origText, requests) {
           findings.push(applyWording(makeFinding({
             type: 'modified', original: O[hit.i].text, updated: display, title: display, source, similarity: hit.d,
             confidence: hit.c >= 0.7 ? 'medium' : 'low', flags,
-            reason: 'The request uses change wording (for example “change”, “replace”, “increase”) and mentions terms from this original statement, so it may alter what was agreed.',
+            reason: 'The request uses words like “change” or “replace” and mentions words from this part of the agreement, so it may change what was agreed.',
           }), r));
           continue;
         }
@@ -606,14 +606,14 @@ function compareWithRequests(origText, requests) {
         touched.add(bestO.i);
         findings.push(makeFinding({
           type: 'duplicate', original: O[bestO.i].text, updated: display, title: display, source, similarity: bestO.s, confidence: confidenceFor(bestO.s),
-          reason: `This request closely matches an existing requirement (${pct(bestO.s)} keyword overlap). It may already be covered by the original agreement.`,
+          reason: `This request is very close to something already in the agreement (about ${pct(bestO.s)} match). It may already be included.`,
         }));
       } else if (bestO && bestO.s >= 0.5) {
         touched.add(bestO.i);
         findings.push(applyWording(makeFinding({
           type: 'modified', original: O[bestO.i].text, updated: display, title: display, source, similarity: bestO.s, confidence: bestO.s >= 0.65 ? 'medium' : 'low',
           flags: figureFlags(r.text, O[bestO.i].text),
-          reason: `This request overlaps with an existing requirement (${pct(bestO.s)} keyword overlap) and may adjust it. It could also simply be covered already.`,
+          reason: `This request is similar to something in the agreement (about ${pct(bestO.s)} match) and may change it. It may also be included already.`,
         }), r));
       } else {
         let dupReq = null;
@@ -621,12 +621,12 @@ function compareWithRequests(origText, requests) {
         if (dupReq) {
           findings.push(makeFinding({
             type: 'duplicate', original: dupReq.text, updated: display, title: display, source, similarity: dupReq.sim, confidence: confidenceFor(dupReq.sim),
-            reason: `This repeats an earlier request (${pct(dupReq.sim)} keyword overlap).`,
+            reason: `The client asked for something very similar earlier (about ${pct(dupReq.sim)} match).`,
           }));
         } else {
           findings.push(applyWording(makeFinding({
             type: 'new', updated: display, title: display, source, confidence: 'medium',
-            reason: 'No statement in the original scope appears to cover this request.',
+            reason: 'Nothing in the original agreement seems to cover this request.',
             closest: bestO && bestO.s >= 0.25 ? { text: O[bestO.i].text, similarity: bestO.s } : null,
             related: relatedExclusion(r, O),
           }), r));
@@ -638,7 +638,7 @@ function compareWithRequests(origText, requests) {
 
   O.forEach((o, i) => {
     if (touched.has(i)) return;
-    findings.push(makeFinding({ type: 'unchanged', original: o.text, updated: o.text, similarity: 1, confidence: 'high', reason: 'No request appears to touch this statement.' }));
+    findings.push(makeFinding({ type: 'unchanged', original: o.text, updated: o.text, similarity: 1, confidence: 'high', reason: 'No request seems to affect this point.' }));
   });
 
   return { findings, stats: { originalStatements: O.length, updatedStatements: O.length, requestStatements } };

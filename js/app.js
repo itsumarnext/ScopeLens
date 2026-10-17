@@ -72,7 +72,7 @@ async function persist(project) {
     await storage.saveProject(project);
     return true;
   } catch (e) {
-    toast(`Could not save: ${storage.describeError(e)}`, { error: true });
+    toast(`Could not save. ${storage.describeError(e)}`, { error: true });
     return false;
   }
 }
@@ -104,13 +104,13 @@ async function route() {
     await render(parts);
   } catch (e) {
     console.error(e);
-    setView(V.viewNotFound('Something went wrong while loading this page. Your data has not been changed.'), { title: 'Error' });
+    setView(V.viewNotFound('Something went wrong while opening this page. Your projects have not been changed.'), { title: 'Error' });
   }
 }
 
 async function render(parts) {
   if (!parts.length) return renderDashboard();
-  if (parts[0] === 'new') return setView(V.viewNewProject(), { title: 'Create project', nav: '#/new' });
+  if (parts[0] === 'new') return setView(V.viewNewProject(), { title: 'Create a project', nav: '#/new' });
   if (parts[0] === 'data') return renderData();
   if (parts[0] === 'about') return setView(V.viewAbout(), { title: 'How it works', nav: '#/about' });
   if (parts[0] === 'p' && parts[1]) return renderProject(parts);
@@ -125,7 +125,7 @@ async function renderDashboard() {
     showArchived: state.showArchived,
     storageBanner: state.storageBanner,
     showBackupNote: storage.prefs.get('backupNoteDismissed') !== '1',
-  }), { title: 'Projects', nav: '#/' });
+  }), { title: 'Your projects', nav: '#/' });
 }
 
 async function renderData() {
@@ -138,18 +138,18 @@ async function renderData() {
     modeError: storage.storageInitError(),
     persist,
     importResult: state.importResult,
-  }), { title: 'Backup & import', nav: '#/data' });
+  }), { title: 'Backups', nav: '#/data' });
 }
 
 async function renderProject(parts) {
   const project = await storage.getProject(parts[1]);
-  if (!project) return setView(V.viewNotFound('This project does not exist in this browser. It may have been deleted, or it may be stored in a different browser.'), { title: 'Not found' });
+  if (!project) return setView(V.viewNotFound('This project is not in this browser. It may have been deleted, or it may be saved in a different browser.'), { title: 'Not found' });
   state.project = project;
   const sub = parts[2] || '';
   const title = project.name;
   if (sub === '') return setView(V.viewOverview(project), { title });
-  if (sub === 'scope') return setView(V.viewScope(project, state.editingScope), { title: `Original scope · ${title}` });
-  if (sub === 'requests') return setView(V.viewRequests(project), { title: `Requests · ${title}` });
+  if (sub === 'scope') return setView(V.viewScope(project, state.editingScope), { title: `Agreement · ${title}` });
+  if (sub === 'requests') return setView(V.viewRequests(project), { title: `Client requests · ${title}` });
   if (sub === 'history') return setView(V.viewHistory(project), { title: `History · ${title}` });
   if (sub === 'compare') {
     if (!state.compareForm.selected) state.compareForm.selected = new Set(project.requests.map((r) => r.id));
@@ -157,7 +157,7 @@ async function renderProject(parts) {
   }
   if (sub === 'c' && parts[3]) {
     const c = P.getComparison(project, parts[3]);
-    if (!c) return setView(V.viewNotFound('That comparison no longer exists.'), { title: 'Not found' });
+    if (!c) return setView(V.viewNotFound('That comparison is no longer here.'), { title: 'Not found' });
     state.comparison = c;
     if (state.results.cid !== c.id) state.results = { cid: c.id, tab: 'findings', type: 'changes', status: 'all', showAllText: false };
     if (parts[4] === 'report') {
@@ -199,14 +199,14 @@ const actions = {
     const p = await projectById(el.dataset.id);
     if (!p) return;
     const done = await formDialog({
-      title: 'Rename project',
+      title: 'Rename this project',
       submitLabel: 'Rename',
       bodyHtml: `<div class="field"><label for="rn-name">Project name<span class="req"> (required)</span></label><input id="rn-name" class="input" name="name" maxlength="120" value="${esc(p.name)}" aria-required="true" aria-describedby="rn-error" autocomplete="off"><p class="field-error" id="rn-error" data-error-for="name"></p></div>`,
       onSubmit: async (v) => {
         const r = P.validateProjectFields({ ...p, name: v.name });
         if (r.errors.name) return { errors: { name: r.errors.name } };
         const res = await mutate(p, (x) => P.applyProjectFields(x, { ...r.values, client: x.client, description: x.description, startDate: x.startDate, budget: x.budget === '' ? '' : String(x.budget), currency: x.currency }));
-        if (!res.ok) return { errors: { _form: 'Could not save the new name.' } };
+        if (!res.ok) return { errors: { _form: 'Could not save the new name. Please try again.' } };
         return true;
       },
     });
@@ -218,31 +218,31 @@ const actions = {
     if (!p) return;
     const done = await formDialog({
       title: 'Edit project details',
-      submitLabel: 'Save details',
+      submitLabel: 'Save changes',
       bodyHtml: V.projectFields({ ...p, budget: p.budget === '' ? '' : String(p.budget) }),
       onSubmit: async (v) => {
         const r = P.validateProjectFields(v);
         if (!r.ok) return { errors: r.errors };
         const res = await mutate(p, (x) => P.applyProjectFields(x, r.values));
-        if (!res.ok) return { errors: { _form: 'Could not save your changes.' } };
+        if (!res.ok) return { errors: { _form: 'Could not save your changes. Please try again.' } };
         return true;
       },
     });
-    if (done) { toast('Details saved.'); rerender(); }
+    if (done) { toast('Changes saved.'); rerender(); }
   },
 
   'project-archive': async (el) => {
     const p = await projectById(el.dataset.id);
     if (!p) return;
     const res = await mutate(p, (x) => P.setArchived(x, true));
-    if (res.ok) { toast('Project archived. Find it under “Archived”.'); rerender(); }
+    if (res.ok) { toast('Project archived. You can find it under “Archived”.'); rerender(); }
   },
 
   'project-restore': async (el) => {
     const p = await projectById(el.dataset.id);
     if (!p) return;
     const res = await mutate(p, (x) => P.setArchived(x, false));
-    if (res.ok) { toast('Project restored.'); rerender(); }
+    if (res.ok) { toast('Project moved back to your projects.'); rerender(); }
   },
 
   'project-delete': async (el) => {
@@ -250,7 +250,7 @@ const actions = {
     if (!p) return;
     const ok = await confirmDialog({
       title: `Delete “${p.name}”?`,
-      message: 'This permanently deletes the project with its original scope, requests, comparisons and history from this browser. It cannot be undone. Export a backup first if you might need it.',
+      message: 'This deletes the project for good, with its agreement, client requests, results and history. You cannot undo this. Download a backup first if you might need it.',
       confirmLabel: 'Delete project',
       danger: true,
     });
@@ -258,7 +258,7 @@ const actions = {
     try {
       await storage.deleteProject(p.id);
     } catch (e) {
-      toast(`Could not delete: ${storage.describeError(e)}`, { error: true });
+      toast(`Could not delete. ${storage.describeError(e)}`, { error: true });
       return;
     }
     if (state.project && state.project.id === p.id) state.project = null;
@@ -272,15 +272,15 @@ const actions = {
     const res = await mutate(p, (x) => P.logDataExport(x));
     if (!res.ok) return;
     downloadFile(`scopelens-${slugify(p.name)}-${todayDate()}.json`, JSON.stringify(P.exportEnvelope([p]), null, 2), 'application/json');
-    toast('Project data exported.');
+    toast('Project backup downloaded.');
   },
 
   /* ---- baseline ---- */
   'scope-edit': async () => {
     const ok = await confirmDialog({
-      title: 'Edit the baseline?',
-      message: 'The original scope is the baseline for every comparison. Changing it can change what future comparisons flag. Comparisons you already ran keep the version they used, and the current text is saved as an earlier revision.',
-      confirmLabel: 'Edit baseline',
+      title: 'Change the original agreement?',
+      message: 'ScopeLens checks every new request against this agreement. If you change it, new comparisons may give different results. Comparisons you already made keep the old text, and the old version is saved as an earlier version.',
+      confirmLabel: 'Yes, change it',
     });
     if (!ok) return;
     state.editingScope = true;
@@ -290,14 +290,14 @@ const actions = {
   'revision-view': (el) => {
     const r = needProject()?.baselineRevisions[Number(el.dataset.index)];
     if (!r) return;
-    infoDialog({ title: `Revision ${Number(el.dataset.index) + 1}`, wide: true, bodyHtml: `<p class="muted">${esc(r.title)}${r.date ? ` · agreed ${esc(fmtDate(r.date))}` : ''}</p><pre class="scope-text">${esc(r.text)}</pre>` });
+    infoDialog({ title: `Earlier version ${Number(el.dataset.index) + 1}`, wide: true, bodyHtml: `<p class="muted">${esc(r.title)}${r.date ? ` · agreed ${esc(fmtDate(r.date))}` : ''}</p><pre class="scope-text">${esc(r.text)}</pre>` });
   },
 
   /* ---- requests ---- */
   'request-add': async () => {
     const p = needProject();
     const done = await formDialog({
-      title: 'Add client request',
+      title: 'Add a client request',
       submitLabel: 'Add request',
       wide: true,
       bodyHtml: V.requestFields({}),
@@ -305,12 +305,12 @@ const actions = {
         const r = P.validateRequestFields(v);
         if (!r.ok) return { errors: r.errors };
         const res = await mutate(p, (x) => P.addRequest(x, r.values));
-        if (!res.ok) return { errors: { _form: 'Could not save the request.' } };
+        if (!res.ok) return { errors: { _form: 'Could not save the request. Please try again.' } };
         state.compareForm.selected = null;
         return true;
       },
     });
-    if (done) { toast('Request added.'); rerender(); }
+    if (done) { toast('Client request added.'); rerender(); }
   },
   'request-edit': async (el) => {
     const p = needProject();
@@ -318,32 +318,32 @@ const actions = {
     if (!req) return;
     const done = await formDialog({
       title: 'Edit client request',
-      submitLabel: 'Save request',
+      submitLabel: 'Save changes',
       wide: true,
       bodyHtml: V.requestFields(req),
       onSubmit: async (v) => {
         const r = P.validateRequestFields(v);
         if (!r.ok) return { errors: r.errors };
         const res = await mutate(p, (x) => P.updateRequest(x, req.id, r.values));
-        if (!res.ok) return { errors: { _form: 'Could not save the request.' } };
+        if (!res.ok) return { errors: { _form: 'Could not save the request. Please try again.' } };
         return true;
       },
     });
-    if (done) { toast('Request saved.'); rerender(); }
+    if (done) { toast('Changes saved.'); rerender(); }
   },
   'request-delete': async (el) => {
     const p = needProject();
     const req = p.requests.find((r) => r.id === el.dataset.id);
     if (!req) return;
     const ok = await confirmDialog({
-      title: 'Delete this request?',
-      message: 'The request will be removed from the log. Comparisons you already ran keep their own copy of it. This cannot be undone.',
+      title: 'Delete this client request?',
+      message: 'It will be taken off your list. Comparisons you already made keep their own copy. You cannot undo this.',
       confirmLabel: 'Delete request',
       danger: true,
     });
     if (!ok) return;
     const res = await mutate(p, (x) => P.deleteRequest(x, req.id));
-    if (res.ok) { state.compareForm.selected = null; toast('Request deleted.'); rerender(); }
+    if (res.ok) { state.compareForm.selected = null; toast('Client request deleted.'); rerender(); }
   },
 
   /* ---- compare ---- */
@@ -353,7 +353,7 @@ const actions = {
     const p = needProject();
     const ok = await confirmDialog({
       title: 'Delete this comparison?',
-      message: 'The saved comparison, your review decisions and notes on it will be deleted. This cannot be undone.',
+      message: 'This deletes the comparison, with your choices and notes on it. You cannot undo this.',
       confirmLabel: 'Delete comparison',
       danger: true,
     });
@@ -392,14 +392,14 @@ const actions = {
   'message-copy': async () => {
     const text = document.getElementById('client-message').value;
     const ok = await copyToClipboard(text);
-    toast(ok ? 'Message copied.' : 'Could not copy automatically. Select the text and copy it manually.', { error: !ok });
+    toast(ok ? 'Message copied.' : 'Could not copy automatically. Select the text and copy it yourself.', { error: !ok });
   },
   'message-reset': async () => {
     const p = needProject();
     const res = await mutate(p, () => P.resetMessage(state.comparison));
     if (!res.ok) return;
     document.getElementById('client-message').value = effectiveMessage(p, state.comparison);
-    toast('Message reset to the suggestion.');
+    toast('Message reset.');
   },
 
   /* ---- report ---- */
@@ -420,43 +420,43 @@ const actions = {
     const c = state.comparison;
     await mutate(p, (x) => P.logExport(x, P.getComparison(x, c.id) || c, 'json'));
     downloadFile(`scopelens-report-${slugify(p.name)}-${todayDate()}.json`, JSON.stringify(buildReportJSON(p, c), null, 2), 'application/json');
-    toast('Report data exported.');
+    toast('Report data downloaded.');
   },
 
   /* ---- data ---- */
   'export-all': async () => {
     const all = await storage.getAllProjects();
-    if (!all.length) { toast('There is nothing to export yet.'); return; }
+    if (!all.length) { toast('You have no projects to download yet.'); return; }
     downloadFile(`scopelens-backup-${todayDate()}.json`, JSON.stringify(P.exportEnvelope(all), null, 2), 'application/json');
-    toast(`Exported ${plural(all.length, 'project')}.`);
+    toast(`Downloaded ${plural(all.length, 'project')}.`);
   },
   'persist-request': async () => {
     const granted = await storage.requestPersistentStorage();
-    toast(granted ? 'The browser agreed to keep your data.' : 'The browser did not grant persistent storage. Keep exporting backups.', { error: !granted });
+    toast(granted ? 'The browser agreed to keep your projects.' : 'The browser said no. Keep downloading backups.', { error: !granted });
     renderData();
   },
   'demo-load': async () => {
     const demo = P.buildDemoProject();
-    if (await persist(demo)) { toast('Demo project loaded.'); go(`#/p/${demo.id}`); }
+    if (await persist(demo)) { toast('Sample project added.'); go(`#/p/${demo.id}`); }
   },
   'demo-remove': async () => {
     const all = await storage.getAllProjects();
     const demos = all.filter((p) => p.isDemo);
     if (!demos.length) return;
     const ok = await confirmDialog({
-      title: 'Remove demo data?',
-      message: `This deletes ${plural(demos.length, 'demo project')}. Your own projects are not touched.`,
-      confirmLabel: 'Remove demo data',
+      title: 'Remove the sample project?',
+      message: `This deletes ${plural(demos.length, 'sample project')}. Your own projects are not touched.`,
+      confirmLabel: 'Remove sample project',
       danger: true,
     });
     if (!ok) return;
     try {
       for (const d of demos) await storage.deleteProject(d.id);
     } catch (e) {
-      toast(`Could not remove: ${storage.describeError(e)}`, { error: true });
+      toast(`Could not remove. ${storage.describeError(e)}`, { error: true });
       return;
     }
-    toast('Demo data removed.');
+    toast('Sample project removed.');
     renderData();
   },
 };
@@ -465,7 +465,7 @@ function refreshFindings() {
   const c = state.comparison;
   const r = state.results;
   const list = document.getElementById('findings-list');
-  if (list) list.innerHTML = V.findingsListHtml(c.findings, r.type, r.status);
+  if (list) list.innerHTML = V.findingsListHtml(c.findings, r.type, r.status, c.mode);
   const sum = document.getElementById('summary');
   if (sum) sum.innerHTML = V.summaryHtml(c.findings);
   const msg = document.getElementById('client-message');
@@ -490,7 +490,7 @@ const submitHandlers = {
     if (!r.ok) { showFieldErrors(form, r.errors); return; }
     const p = P.newProject(r.values);
     if (await persist(p)) {
-      toast('Project created. Next, add the original scope.');
+      toast('Project created. Next, add the original agreement.');
       state.editingScope = false;
       go(`#/p/${p.id}/scope`);
     }
@@ -503,7 +503,7 @@ const submitHandlers = {
     const res = await mutate(p, (x) => P.saveBaseline(x, r.values));
     if (!res.ok) return;
     state.editingScope = false;
-    toast(res.out.changed ? 'Original scope saved as the baseline.' : 'No changes to save.');
+    toast(res.out.changed ? 'Agreement saved.' : 'Nothing was changed.');
     rerender();
   },
 
@@ -522,7 +522,7 @@ const submitHandlers = {
       return;
     }
     if (!(await persist(p))) { await rerender(); return; }
-    toast(result.carried ? `Comparison ready. ${plural(result.carried, 'earlier decision')} carried over.` : 'Comparison ready.');
+    toast(result.carried ? `Comparison done. ${plural(result.carried, 'earlier choice')} kept.` : 'Comparison done.');
     go(`#/p/${p.id}/c/${result.comparison.id}`);
   },
 };
@@ -608,16 +608,16 @@ async function handleImport(input) {
   const file = input.files && input.files[0];
   if (!file) return;
   const fail = (lines) => {
-    state.importResult = `<div class="banner" role="alert"><div><p><strong>Import failed. Nothing was changed.</strong></p><ul class="plain-bullets">${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div></div>`;
+    state.importResult = `<div class="banner" role="alert"><div><p><strong>Could not restore this file. Nothing was changed.</strong></p><ul class="plain-bullets">${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div></div>`;
     document.getElementById('import-result').innerHTML = state.importResult;
     input.value = '';
   };
-  if (file.size > 30 * 1024 * 1024) return fail(['That file is larger than 30 MB, which is far bigger than a ScopeLens backup.']);
+  if (file.size > 30 * 1024 * 1024) return fail(['That file is much too big to be a ScopeLens backup.']);
   let data;
   try {
     data = JSON.parse(await file.text());
   } catch {
-    return fail(['The file could not be read as JSON. It may be corrupted or may not be a ScopeLens backup.']);
+    return fail(['This file could not be read. It may be damaged, or it may not be a ScopeLens backup.']);
   }
   const { projects, errors, warnings } = P.validateImport(data);
   if (errors.length) return fail(errors);
@@ -629,10 +629,10 @@ async function handleImport(input) {
       saved += 1;
     }
   } catch (e) {
-    return fail([`Saving stopped after ${saved} of ${projects.length} projects: ${storage.describeError(e)}`]);
+    return fail([`Restoring stopped after ${saved} of ${projects.length} projects. ${storage.describeError(e)}`]);
   }
-  state.importResult = `<div class="banner"><div><p><strong>Imported ${plural(saved, 'project')}.</strong> Existing projects were not changed.</p>${warnings.length ? `<ul class="plain-bullets">${warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}</div></div>`;
-  toast(`Imported ${plural(saved, 'project')}.`);
+  state.importResult = `<div class="banner"><div><p><strong>Restored ${plural(saved, 'project')}.</strong> Your other projects were not changed.</p>${warnings.length ? `<ul class="plain-bullets">${warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}</div></div>`;
+  toast(`Restored ${plural(saved, 'project')}.`);
   await renderData();
   state.importResult = '';
 }
@@ -642,7 +642,7 @@ async function handleImport(input) {
 async function boot() {
   const mode = await storage.initStorage();
   if (mode === 'memory') {
-    state.storageBanner = 'Your browser is blocking persistent storage (for example in private browsing). Projects will be lost when this page is closed or refreshed. Export a backup often from Backup & import.';
+    state.storageBanner = 'Your browser is not letting ScopeLens save projects (this can happen in private browsing). They will be lost when you close or refresh this page. Download a backup often from the Backups page.';
   }
   window.addEventListener('hashchange', route);
   await route();
