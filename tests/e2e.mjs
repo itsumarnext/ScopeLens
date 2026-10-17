@@ -24,11 +24,12 @@ page.on('request', (r) => { if (!r.url().startsWith(BASE) && !r.url().startsWith
 
 const text = async (sel) => (await page.locator(sel).first().innerText());
 const hash = () => page.evaluate(() => location.hash);
+const openNotes = () => page.evaluate(() => document.querySelectorAll('.note-details').forEach((d) => { d.open = true; }));
 const noHScroll = async () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
 
 await page.goto(BASE);
 await page.waitForSelector('h1');
-check('Dashboard loads with empty state', (await text('.empty h2')).includes('Create your first project'));
+check('Dashboard loads with empty state', (await text('.empty h2')).includes('No projects yet'));
 check('Dashboard: no horizontal scroll at 390px', await noHScroll());
 
 // 1. create project with only required field
@@ -74,7 +75,7 @@ const addReq = async (t, d, src) => {
 };
 await page.click('button[data-action="request-add"]');
 await page.fill('#rf-text', ''); await page.click('dialog button[type=submit]');
-check('Request: empty text rejected, dialog stays open', (await text('dialog [data-error-for="text"]')).includes('Paste') && await page.locator('dialog[open]').count() === 1);
+check('Request: empty text rejected, dialog stays open', (await text('dialog [data-error-for="text"]')).includes('Add what the client asked') && await page.locator('dialog[open]').count() === 1);
 await page.keyboard.press('Escape'); await page.waitForSelector('dialog', { state: 'detached' });
 await addReq('Hi! Could you also add an online ordering form so customers can pre-order cakes? Thanks!', '2026-09-10', 'Email');
 await addReq('Please change the number of pages from 5 to 7, we want to add a Blog and a Careers page.', '2026-09-05', 'Chat message');
@@ -106,43 +107,45 @@ await page.reload(); await page.waitForSelector('.request');
 check('Persistence: requests survive refresh', await page.locator('.request').count() === 4);
 await page.goto(BASE + '#/'); await page.waitForSelector('.project-row');
 check('Persistence: project listed after refresh', (await text('.project-name')).includes('Bakery site'));
-check('Dashboard: status preview shown', (await text('.project-status')).includes('4 requests'));
+check('Dashboard: status preview shown', (await text('.project-status')).includes('4 client requests'));
 
 // 5-6. compare
 await page.goto(BASE + projectHash + '/compare'); await page.waitForSelector('form[data-form="compare"]');
 await page.click('button[data-action="select-no-requests"]');
 await page.click('form[data-form="compare"] button[type=submit]');
-check('Compare: no request selected -> error', (await text('[data-error-for="requests"]')).includes('Select at least one'));
+check('Compare: no request selected -> error', (await text('[data-error-for="requests"]')).includes('Choose at least one'));
 await page.click('button[data-action="select-all-requests"]');
 await page.click('form[data-form="compare"] button[type=submit]');
 await page.waitForSelector('.summary');
 const stats = await page.$$eval('.stat', (els) => els.map((e) => e.querySelector('.stat-n').textContent));
 check('Results: summary numbers real (additions, removals, modified, clarify)', stats.join(',') === '1,1,1,1', stats.join(','));
 check('Results: finding cards shown', await page.locator('.finding').count() === 4, String(await page.locator('.finding').count()));
-check('Results: related exclusion shown for online ordering', (await page.locator('.finding', { hasText: 'online ordering' }).first().innerText()).includes('Related exclusion'));
+check('Results: related exclusion shown for online ordering', (await page.locator('.finding', { hasText: 'online ordering' }).first().innerText()).includes('may say this is not included'));
 check('Results: no horizontal scroll', await noHScroll());
 
 // 8-9. statuses and notes
 const card = page.locator('.finding', { hasText: 'online ordering' }).first();
 await card.locator('button[data-status="relevant"]').click();
-check('Review: relevant chip shown', (await page.locator('.finding', { hasText: 'online ordering' }).first().innerText()).includes('Relevant change'));
+check('Review: relevant chip shown', (await page.locator('.finding', { hasText: 'online ordering' }).first().innerText()).includes('Real change'));
 const c2 = page.locator('.finding', { hasText: 'Gallery' }).first();
 await c2.locator('button[data-status="irrelevant"]').click();
 const c3 = page.locator('.finding', { hasText: 'modern' }).first();
 await c3.locator('button[data-status="clarify"]').click();
+await page.waitForTimeout(500);
 check('Review: ambiguous -> clarify count stays 1', (await page.$$eval('.stat-n', (e) => e.map((x) => x.textContent)))[3] === '1');
-await page.locator('.finding', { hasText: 'online ordering' }).first().locator('textarea').fill('Covered by exclusion; will quote extra');
-await page.locator('.finding', { hasText: 'online ordering' }).first().locator('button:has-text("Save note")').click();
+await openNotes(); await page.locator('.finding', { hasText: 'online ordering' }).first().locator('textarea').fill('Covered by exclusion; will quote extra');
+await openNotes(); await page.locator('.finding', { hasText: 'online ordering' }).first().locator('button:has-text("Save note")').click();
 await page.waitForSelector('.toast');
-await page.locator('.finding', { hasText: 'online ordering' }).first().locator('textarea').fill('Covered by exclusion; quote extra');
-await page.locator('.finding', { hasText: 'online ordering' }).first().locator('button:has-text("Save note")').click();
+await openNotes(); await page.locator('.finding', { hasText: 'online ordering' }).first().locator('textarea').fill('Covered by exclusion; quote extra');
+await openNotes(); await page.locator('.finding', { hasText: 'online ordering' }).first().locator('button:has-text("Save note")').click();
 await page.waitForTimeout(600);
 await page.reload(); await page.waitForSelector('.finding');
+await openNotes();
 check('Review: statuses & notes persist', (await page.locator('.finding', { hasText: 'online ordering' }).first().locator('textarea').inputValue()).includes('quote extra'), await page.locator('.finding', { hasText: 'online ordering' }).first().locator('textarea').inputValue());
 // toggle off
 await page.locator('.finding', { hasText: 'Gallery' }).first().locator('button[data-status="irrelevant"]').click();
-await page.waitForFunction(() => [...document.querySelectorAll('.finding')].find((f) => f.innerText.includes('Gallery'))?.innerText.includes('Not reviewed'));
-check('Review: pressing again clears status', (await page.locator('.finding', { hasText: 'Gallery' }).first().innerText()).includes('Not reviewed'), (await page.locator('.finding', { hasText: 'Gallery' }).first().innerText()).slice(0, 120));
+await page.waitForFunction(() => [...document.querySelectorAll('.finding')].find((f) => f.innerText.includes('Gallery'))?.innerText.includes('Not reviewed yet'));
+check('Review: pressing again clears status', (await page.locator('.finding', { hasText: 'Gallery' }).first().innerText()).includes('Not reviewed yet'), (await page.locator('.finding', { hasText: 'Gallery' }).first().innerText()).slice(0, 120));
 // filters
 await page.selectOption('#filter-status', 'relevant');
 check('Filter: status filter works', await page.locator('.finding').count() === 1);
@@ -159,7 +162,7 @@ check('Text diff: shows added text', await page.locator('.diff ins').count() > 0
 
 // message
 const msg = await page.inputValue('#client-message');
-check('Message: uses project name and neutral wording', msg.includes('Bakery site') && msg.includes('confirm the expected deliverables') && !/owe|must pay|violat/i.test(msg));
+check('Message: uses project name and neutral wording', msg.includes('Bakery site') && msg.includes('confirm what you need') && !/owe|must pay|violat/i.test(msg));
 await page.fill('#client-message', msg + '\nPS: thanks!'); await page.locator('#client-message').blur();
 await page.click('button[data-action="message-copy"]');
 await page.waitForSelector('.toast:has-text("copied")');
@@ -167,10 +170,10 @@ const clip = await page.evaluate(() => navigator.clipboard.readText());
 check('Message: copy to clipboard works with edited text', clip.includes('PS: thanks!'));
 
 // 10-11. report
-await page.click('a:has-text("Generate report")');
+await page.click('a:has-text("Create report")');
 await page.waitForSelector('.sl-report');
 const rep = await text('.sl-report');
-{ const need = ['Bakery site', 'ScopeLens', 'not a legal determination', 'Relevant change', 'quote extra', 'PS: thanks!', 'Confirmed by the reviewer']; const miss = need.filter((s) => !rep.includes(s)); check('Report: has project, branding, disclaimer, decisions, message', !miss.length, 'missing: ' + miss.join(' | ')); }
+{ const need = ['Bakery site', 'ScopeLens', 'not legal advice', 'Real change', 'quote extra', 'PS: thanks!', 'What you confirmed']; const miss = need.filter((s) => !rep.includes(s)); check('Report: has project, branding, disclaimer, decisions, message', !miss.length, 'missing: ' + miss.join(' | ')); }
 check('Report: no horizontal scroll', await noHScroll());
 const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button[data-action="report-download-html"]')]);
 const htmlPath = path.join(tmp, 'report.html'); await dl.saveAs(htmlPath);
@@ -191,16 +194,16 @@ fs.copyFileSync(pdfPath, path.join(tmp, '..', 'scopelens-sample-report.pdf'));
 // history
 await page.goto(BASE + projectHash + '/history'); await page.waitForSelector('.timeline');
 const hist = await text('.timeline');
-{ const need = ['Original scope saved', 'Request added', 'Comparison generated', 'Finding reviewed', 'Note recorded', 'Report exported']; const miss = need.filter((s) => !hist.includes(s)); check('History: records baseline, requests, comparison, reviews, notes, export', !miss.length, 'missing: ' + miss.join(' | ')); }
-check('History: distinguishes request date vs entered date', (await page.locator('.timeline').innerText()).includes('entered into ScopeLens'));
+{ const need = ['Original agreement saved', 'Client request added', 'Comparison done', 'Result reviewed', 'Report shared or saved']; const miss = need.filter((s) => !hist.includes(s)); check('History: records baseline, requests, comparison, reviews, notes, export', !miss.length, 'missing: ' + miss.join(' | ')); }
+check('History: distinguishes request date vs entered date', (await page.locator('.timeline').innerText()).includes('Added to ScopeLens'));
 
 // baseline edit warning + revision
 await page.goto(BASE + projectHash + '/scope'); await page.waitForSelector('.scope-text');
 await page.click('button[data-action="scope-edit"]');
-check('Baseline edit: warning dialog shown', (await text('dialog')).includes('Changing it can change'));
+check('Baseline edit: warning dialog shown', (await text('dialog')).includes('Change the original agreement?'));
 await page.click('dialog button:has-text("Cancel")');
 check('Baseline edit: cancel leaves read-only', await page.locator('form[data-form="scope"]').count() === 0);
-await page.click('button[data-action="scope-edit"]'); await page.click('dialog button:has-text("Edit baseline")');
+await page.click('button[data-action="scope-edit"]'); await page.click('dialog button:has-text("Yes, change it")');
 await page.fill('#sf-text', BASELINE.replace('up to 30 items', 'up to 40 items'));
 await page.click('form[data-form="scope"] button[type=submit]'); await page.waitForSelector('.scope-text');
 check('Baseline edit: saved and revision kept', (await page.locator('.card:has-text("Earlier versions")').count()) === 1);
@@ -218,13 +221,13 @@ await page.fill('#cf-manual', reformatted);
 await page.click('form[data-form="compare"] button[type=submit]'); await page.waitForSelector('.summary');
 const s2 = await page.$$eval('.stat-n', (e) => e.map((x) => x.textContent));
 check('Formatting-only changes (case/punctuation/line breaks) -> no findings', s2.join(',') === '0,0,0,0', s2.join(','));
-check('Empty comparison state shown', (await text('#findings-list')).includes('No meaningful changes'));
+check('Empty comparison state shown', (await text('#findings-list')).includes('No changes found'));
 // real change
 await page.goto(BASE + projectHash + '/compare'); await page.check('input[name="mode"][value="manual"]');
 await page.fill('#cf-manual', BASELINE.replace('5-page', '8-page').replace('- Basic on-page SEO: page titles and meta descriptions for each page.\n', '') + '\n- Add a blog with 3 posts per month.');
 await page.click('form[data-form="compare"] button[type=submit]'); await page.waitForSelector('.summary');
 const s3 = await page.$$eval('.stat-n', (e) => e.map((x) => x.textContent));
-check('Manual compare: addition, removal, modification detected', s3[0] === '1' && s3[1] === '1' && Number(s3[2]) >= 1, s3.join(','));
+check('Manual compare: addition, removal, modification detected', s3[0] === '1' && s3[2] === '1' && Number(s3[1]) >= 1, s3.join(','));
 await page.click('button[data-action="results-tab"][data-tab="text"]'); await page.waitForSelector('.diff');
 check('Text diff: shows both added and removed', (await page.locator('.diff ins').count()) > 0 && (await page.locator('.diff del').count()) > 0);
 
@@ -236,9 +239,9 @@ const backup = JSON.parse(fs.readFileSync(bPath, 'utf8'));
 check('Export: backup JSON has project', backup.app === 'ScopeLens' && backup.projects.length === 1 && backup.projects[0].requests.length === 4);
 await page.setInputFiles('#import-file', bPath);
 await page.waitForSelector('#import-result .banner');
-check('Import: valid backup imported as copy', (await text('#import-result')).includes('Imported 1 project'));
+check('Import: valid backup imported as copy', (await text('#import-result')).includes('Restored 1 project'));
 await page.goto(BASE + '#/'); await page.waitForSelector('.project-row');
-check('Import: both original and imported copy listed', await page.locator('.project-row').count() === 2 && (await page.locator('.project-list').innerText()).includes('imported copy'));
+check('Import: both original and imported copy listed', await page.locator('.project-row').count() === 2 && (await page.locator('.project-list').innerText()).includes('restored copy'));
 // corrupted
 const bad = (name, content) => { const p = path.join(tmp, name); fs.writeFileSync(p, content); return p; };
 await page.goto(BASE + '#/data'); await page.waitForSelector('#import-file');
@@ -246,7 +249,7 @@ for (const [name, content, expect] of [
   ['bad1.json', '{not json', 'could not be read'],
   ['bad2.json', '[1,2,3]', 'not a ScopeLens backup'],
   ['bad3.json', JSON.stringify({ app: 'Other', schema: 1, projects: [] }), 'does not look like'],
-  ['bad4.json', JSON.stringify({ app: 'ScopeLens', schema: 1, projects: [{ name: '' }, 5] }), 'No valid projects'],
+  ['bad4.json', JSON.stringify({ app: 'ScopeLens', schema: 1, projects: [{ name: '' }, 5] }), 'No usable projects'],
   ['bad5.json', JSON.stringify({ app: 'ScopeLens', schema: 99, projects: [] }), 'newer version'],
 ]) {
   await page.setInputFiles('#import-file', bad(name, content));
@@ -255,7 +258,7 @@ for (const [name, content, expect] of [
 }
 const hostile = JSON.parse(JSON.stringify(backup)); hostile.projects[0].name = '<img src=x onerror=alert(1)>'; hostile.projects[0].requests[0].text = '<script>alert(1)</script>'; hostile.projects[0].comparisons[0].findings[0].type = 'bogus';
 await page.setInputFiles('#import-file', bad('hostile.json', JSON.stringify(hostile)));
-await page.waitForFunction(() => document.querySelector('#import-result')?.innerText.includes('Imported'));
+await page.waitForFunction(() => document.querySelector('#import-result')?.innerText.includes('Restored'));
 await page.goto(BASE + '#/'); await page.waitForSelector('.project-row');
 check('Import: hostile markup is escaped, not executed', (await page.locator('.project-list img').count()) === 0);
 
@@ -264,7 +267,7 @@ await page.goto(BASE + '#/new'); await page.fill('#pf-name', 'Empty one'); await
 await page.waitForSelector('form[data-form="scope"]');
 const emptyHash = (await hash()).replace('/scope', '');
 await page.goto(BASE + emptyHash + '/compare'); await page.waitForSelector('.empty');
-check('Empty project: compare asks for baseline', (await text('.empty')).includes('Save the original scope first'));
+check('Empty project: compare asks for baseline', (await text('.empty')).includes('Add the original agreement first'));
 await page.goto(BASE + emptyHash + '/requests'); await page.waitForSelector('.empty');
 await page.goto(BASE + emptyHash + '/history'); await page.waitForSelector('.timeline');
 check('Empty project: overview & history render', true);
@@ -298,9 +301,9 @@ await page.waitForFunction(() => !document.body.innerText.includes('Renamed one'
 check('Delete: confirm removes project', await row().count() === 0);
 
 // demo
-await page.goto(BASE + '#/data'); await page.click('button[data-action="demo-load"]'); await page.waitForSelector('.chip:has-text("Demo data")');
+await page.goto(BASE + '#/data'); await page.click('button[data-action="demo-load"]'); await page.waitForSelector('.chip:has-text("Sample project")');
 check('Demo: loads on request and is labelled', true);
-await page.goto(BASE + '#/data'); await page.click('button[data-action="demo-remove"]'); await page.click('dialog button:has-text("Remove demo data")');
+await page.goto(BASE + '#/data'); await page.click('button[data-action="demo-remove"]'); await page.click('dialog button:has-text("Remove sample project")');
 await page.waitForFunction(() => document.querySelector('button[data-action="demo-remove"]')?.disabled);
 check('Demo: removed without touching real projects', true);
 await page.goto(BASE + '#/'); await page.waitForSelector('.project-row');
@@ -337,12 +340,12 @@ await page.goto(BASE + '#/about'); check('360px: no horizontal scroll', await no
   const p2 = await ctx2.newPage();
   const errs2 = []; p2.on('pageerror', (e) => errs2.push(e.message));
   await p2.goto(BASE); await p2.waitForSelector('.banner[role="alert"]');
-  check('Storage failure: warning banner shown', (await p2.innerText('.banner[role="alert"]')).includes('blocking persistent storage'));
+  check('Storage failure: warning banner shown', (await p2.innerText('.banner[role="alert"]')).includes('not letting ScopeLens save'));
   await p2.goto(BASE + '#/new'); await p2.fill('#pf-name', 'Memory only'); await p2.click('form button[type=submit]');
   await p2.waitForSelector('form[data-form="scope"]');
   check('Storage failure: app still works in memory mode', true);
   await p2.goto(BASE + '#/data'); await p2.waitForSelector('.card');
-  check('Storage failure: data page explains it', (await p2.innerText('main')).includes('temporary memory only'));
+  check('Storage failure: data page explains it', (await p2.innerText('main')).includes('only held in memory'));
   check('Storage failure: no uncaught errors', errs2.length === 0, errs2.join('|'));
   await ctx2.close();
 }

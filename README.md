@@ -63,15 +63,15 @@ You have a ZIP (`ScopeLens.zip`). Extract it with any file manager (for example 
 ## 3. Using ScopeLens
 
 1. **Create project** — only the name is required.
-2. **Original scope** — paste the agreed scope (proposal, contract, email, notes) and save it as the baseline. Use one requirement per line or sentence for the best results. Editing it later shows a warning, and the old version is kept as a revision.
-3. **Requests** — add each client request with the date received, an optional source (email, chat, meeting…), reference and notes. You paste the text yourself; ScopeLens never reads your messages.
-4. **Compare** — compare the baseline with the selected requests, *or* with a full updated scope you paste in.
-5. **Review findings** — mark each as *Relevant change*, *Not relevant* or *Needs clarification*, and add notes. Filter by type and status. A **Text comparison** tab shows added and removed words.
-6. **Report** — generate a client-ready report. Use **Print or save as PDF** (choose “Save as PDF” in the print dialog), **Download HTML**, or **Export JSON**.
+2. **Original agreement** — paste what you and your client agreed (proposal, contract, email, notes) and save it. Use one requirement per line or sentence for the best results. Editing it later shows a warning, and the old version is kept as an earlier version.
+3. **Client requests** — add each client request with the date received, an optional source (email, chat, meeting…), reference and notes. You paste the text yourself; ScopeLens never reads your messages.
+4. **Compare** — compare the original agreement with the selected requests, *or* with a full updated scope you paste in.
+5. **Review results** — mark each as *Real change*, *Not a change* or *Ask the client*, and add notes. Filter by type and status. A **Word changes** tab shows added and removed words.
+6. **Report** — create a client-ready report. Use **Print or save as PDF** (choose “Save as PDF” in the print dialog), **Download HTML**, or **Export JSON**.
 7. **Client message** — a neutral message built from your real findings. Edit it, then **Copy message**.
-8. **History** — a timeline of everything, showing the date *you* recorded for each request separately from when it was *entered into ScopeLens*.
+8. **History** — a timeline of everything, showing the date *you* recorded for each request separately from when it was *added to ScopeLens*.
 
-**Backup & import** (sidebar) exports all projects as JSON and imports them again. Imports are validated and never overwrite existing projects (duplicates are added as “imported copy”). A clearly-labelled **demo project** can be loaded and removed there.
+**Backups** (sidebar) downloads all projects as a JSON file and restores them again. Imports are validated and never overwrite existing projects (duplicates are added as “restored copy”). A clearly-labelled **sample project** can be loaded and removed there.
 
 ## 4. How the comparison works (and where it can be wrong)
 
@@ -104,7 +104,7 @@ The whole app is static files, so any free static host works. Do **not** include
 ### Netlify Drop or Cloudflare Pages (direct upload)
 Both offer a free drag-and-drop style upload of a site folder; at the time of writing they also accept a ZIP of the folder, but the sign-up and upload screens change, so check the host's current instructions. Upload the `ScopeLens` folder (with `index.html` at its top level) and you receive a public address.
 
-> Important: browser storage belongs to each web address. Projects saved at `localhost` will **not** appear at your deployed address (or the reverse). Use **Backup & import** to move them.
+> Important: browser storage belongs to each web address. Projects saved at `localhost` will **not** appear at your deployed address (or the reverse). Use **Backups** to move them.
 
 ## 6. Privacy and storage
 
@@ -131,3 +131,7 @@ Accounts, teams, cloud sync, payments, email/chat integrations, recording of any
 ## Accessibility
 
 Labelled form fields, visible focus outlines, keyboard-operable dialogs (Esc closes), a skip link, 44px touch targets, status shown with text and shape (never colour alone), and no horizontal scrolling down to 360px wide.
+
+## UI notes
+
+The interface uses a 4/8/12/16/24/32/40 px spacing scale, plain-English labels, and one subtle purple accent (focus ring, current page, next step, added words). There is a light theme only; no dark theme exists.

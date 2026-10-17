@@ -135,7 +135,7 @@ test('client message: uses real details, neutral, no payment claim', () => {
   const m = buildClientMessage(p, c);
   assert.match(m, /^Hi Asha,/);
   assert.match(m, /online ordering form/);
-  assert.match(m, /changes to the agreed cost/);
+  assert.match(m, /any change to the agreed cost/);
   assert.doesNotMatch(m, /you owe|must pay|breach|violat/i);
 });
 test('report: separates detected from decided and escapes HTML', () => {
@@ -144,8 +144,8 @@ test('report: separates detected from decided and escapes HTML', () => {
   const c = runComparison(p, { mode: 'requests', requestIds: p.requests.map((r) => r.id) }).comparison;
   const html = buildReportBody(p, c);
   assert.ok(html.includes('&lt;b&gt;X&lt;/b&gt;'));
-  assert.ok(html.includes('Reviewer decision') && html.includes('Not reviewed'));
-  assert.ok(html.includes('not a legal determination'));
+  assert.ok(html.includes('Your decision') && html.includes('Not reviewed yet'));
+  assert.ok(html.includes('not legal advice'));
   assert.equal(buildReportJSON(p, c).kind, 'change-report');
 });
 test('import validation: accepts round trip, rejects garbage', () => {
