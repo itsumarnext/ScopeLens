@@ -9,6 +9,8 @@ import {
   toast, confirmDialog, infoDialog, formDialog, showFieldErrors, readForm, icon,
 } from './ui.js';
 import * as V from './views.js';
+import * as WS from './ws/index.js';
+import { aiTabs } from './ws/ai.js';
 import {
   buildReportBody, buildReportDocument, buildReportJSON, effectiveMessage, REPORT_CSS,
 } from './report.js';
@@ -38,12 +40,12 @@ function injectReportCss() {
   document.head.appendChild(s);
 }
 
-function setView(html, { title, nav = '#/', report = false, keepScroll = false } = {}) {
+function setView(html, { title, nav = 'ai', report = false, keepScroll = false } = {}) {
   view.innerHTML = html;
   document.title = title ? `${title} · ScopeLens` : 'ScopeLens';
   document.body.classList.toggle('report-view', report);
   document.querySelectorAll('.sidebar .nav-link').forEach((a) => {
-    if (a.getAttribute('href') === nav) a.setAttribute('aria-current', 'page');
+    if (a.dataset.nav === (nav && !nav.startsWith('#') ? nav : 'ai')) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
   });
   if (!keepScroll) {
@@ -109,7 +111,12 @@ async function route() {
 }
 
 async function render(parts) {
-  if (!parts.length) return renderDashboard();
+  if (WS.owns(parts)) {
+    const r = await WS.render();
+    if (r.report) injectReportCss();
+    return setView(r.html, { title: r.title, nav: r.nav, report: !!r.report, keepScroll: r.keepScroll });
+  }
+  if (parts[0] === 'ai' && parts[1] === 'classic') return renderDashboard();
   if (parts[0] === 'new') return setView(V.viewNewProject(), { title: 'Create a project', nav: '#/new' });
   if (parts[0] === 'data') return renderData();
   if (parts[0] === 'about') return setView(V.viewAbout(), { title: 'How it works', nav: '#/about' });
@@ -119,13 +126,13 @@ async function render(parts) {
 
 async function renderDashboard() {
   state.all = await storage.getAllProjects();
-  setView(V.viewDashboard({
+  setView(aiTabs('classic') + V.viewDashboard({
     all: state.all,
     query: state.query,
     showArchived: state.showArchived,
     storageBanner: state.storageBanner,
     showBackupNote: storage.prefs.get('backupNoteDismissed') !== '1',
-  }), { title: 'Your projects', nav: '#/' });
+  }), { title: 'Classic projects', nav: 'ai' });
 }
 
 async function renderData() {
@@ -263,7 +270,7 @@ const actions = {
     }
     if (state.project && state.project.id === p.id) state.project = null;
     toast('Project deleted.');
-    if ((location.hash || '#/') === '#/') rerender(); else go('#/');
+    if ((location.hash || '') === '#/ai/classic') rerender(); else go('#/ai/classic');
   },
 
   'project-export': async (el) => {
@@ -640,6 +647,7 @@ async function handleImport(input) {
 /* ---------------------------------- boot ---------------------------------- */
 
 async function boot() {
+  WS.init();
   const mode = await storage.initStorage();
   if (mode === 'memory') {
     state.storageBanner = 'Your browser is not letting ScopeLens save projects (this can happen in private browsing). They will be lost when you close or refresh this page. Download a backup often from the Backups page.';

@@ -4,6 +4,8 @@
 
 ScopeLens helps freelancers, independent developers, designers and small agencies compare the **original project agreement** with **later client requests**. It flags potentially new requirements, changed deliverables, removals and unclear wording, so you can talk to the client with a clear record.
 
+**Version 3 turns it into one workspace** for your whole client business: clients and leads, projects, invoices and payments, agreements and renewals, tasks and a calendar, and the ScopeLens AI scope-creep check. The original project-comparison tool is still available under *ScopeLens AI → Classic projects* (`#/ai/classic`).
+
 It is a static website: HTML, CSS and plain JavaScript. No server, no account, no paid API, no build step. Your projects are saved **only in your own browser**.
 
 > ScopeLens is an aid for reviewing requirements. It is **not** legal advice and never decides that a client is wrong or that payment is owed.
@@ -108,20 +110,37 @@ Both offer a free drag-and-drop style upload of a site folder; at the time of wr
 
 ## 6. Privacy and storage
 
-- Projects are stored in your browser's **IndexedDB**. They survive refreshes and restarts.
-- **Clearing browser data, private browsing, uninstalling the browser or losing the device can delete them.** Browser storage is not an encrypted or secure backup. Export backups regularly and keep the files private (they are plain text).
-- No analytics, no trackers, no third-party scripts, fonts or images. The page's Content-Security-Policy (`index.html`) blocks it from contacting other sites at all.
-- No API keys exist or are stored.
-- Only paste information you are permitted to store.
-- If your browser blocks storage, ScopeLens warns you and works in memory only for that visit.
+Where things are kept (all in your browser, nothing is uploaded):
+
+| Place | Key / name | What it holds |
+|---|---|---|
+| `localStorage` | `scopelens_data_v1` | One JSON document: settings, clients, leads, projects, agreements, invoices, transactions, tasks, comparisons, scope changes, activity log. Has a `schema` number. |
+| `sessionStorage` | `scopelens_session_v1` | Temporary screen state only (filters, a half-filled compare form). Gone when the tab closes. |
+| IndexedDB | `scopelens_files_v1` | Uploaded agreement files (max 5 MB each). Not included in JSON backups. |
+| IndexedDB / `localStorage` | `projects` store, `scopelens:` keys | The classic projects tool. Untouched by the workspace and has its own backup under *Classic projects*. |
+
+- If saved data cannot be read, ScopeLens keeps a copy under `scopelens_data_v1_unreadable_<time>` and starts empty instead of overwriting it.
+- If the browser is full, the change is rolled back and you are told; nothing is half-saved.
+- Settings → Data & Storage: export a JSON backup, import one (checked first; replaces current data after you confirm), or delete everything (type DELETE).
+- **Clearing browser data, private browsing or losing the device can delete your data.** Export backups regularly and keep them private.
+- No analytics, trackers, third-party scripts, fonts or images. The Content-Security-Policy blocks contact with other sites. No API keys exist or are stored. There is no sync between devices.
+
+## 6b. Known limits
+
+- The "AI" is a local word-matching check, not a live AI model. It never claims otherwise and is not legal advice.
+- Reminders and invoices are text/pages you copy or print. ScopeLens never sends email or messages.
+- One currency at a time; light theme only; PDF/Word files can be stored and downloaded but not previewed or searched.
+- Not tested on a physical Android device (tested in Chromium at 360, 768 and 1280 px).
 
 ## 7. Tests (optional, for developers)
 
 ```bash
-node --test tests/engine.test.mjs        # engine, validation, import, message and report tests
+node --test tests/engine.test.mjs        # comparison engine and classic tool
+node --test tests/workspace.test.mjs     # money, invoices, storage, backup, dashboard rules
 # browser tests: serve the folder on :8765 and run (needs Playwright + Chromium)
 python3 -m http.server 8765 &
-node tests/e2e.mjs
+node tests/e2e.mjs             # classic tool
+node tests/e2e-workspace.mjs   # workspace flows
 ```
 
 ## 8. Not included in this version

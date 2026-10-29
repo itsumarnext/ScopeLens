@@ -82,7 +82,7 @@ const TABS = [
 export function projectHeader(p, active) {
   const meta = [p.client, p.startDate ? `Started ${fmtDate(p.startDate)}` : '', p.budget !== '' && p.budget != null ? formatMoney(p.budget, p.currency) : ''].filter(Boolean);
   return `<header class="project-head">
-    <a class="back-link" href="#/">${icon('chevron-left')}All projects</a>
+    <a class="back-link" href="#/ai/classic">${icon('chevron-left')}All classic projects</a>
     <div class="project-title">
       <h1>${esc(p.name)}</h1>
       ${p.archived || p.isDemo ? `<div class="chips">${p.archived ? '<span class="chip">Archived</span>' : ''}${p.isDemo ? '<span class="chip">Sample project</span>' : ''}</div>` : ''}
@@ -152,7 +152,7 @@ export function viewNewProject() {
     <form class="card form" data-form="new-project" novalidate>
       <p class="form-error" data-form-error role="alert" tabindex="-1"></p>
       ${projectFields({ currency: 'INR' })}
-      <div class="form-actions"><a class="btn" href="#/">Cancel</a><button class="btn btn-primary" type="submit">Create project</button></div>
+      <div class="form-actions"><a class="btn" href="#/ai/classic">Cancel</a><button class="btn btn-primary" type="submit">Create project</button></div>
     </form>`;
 }
 
@@ -542,5 +542,5 @@ export function viewAbout() {
 }
 
 export function viewNotFound(text = 'That page or project could not be found.') {
-  return `${pageHead('Page not found')}${emptyState({ title: 'We could not find that', text: esc(text), action: `<a class="btn btn-primary" href="#/">Back to your projects</a>` })}`;
+  return `${pageHead('Page not found')}${emptyState({ title: 'We could not find that', text: esc(text), action: `<a class="btn btn-primary" href="#/">Back to the dashboard</a>` })}`;
 }

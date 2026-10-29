@@ -27,7 +27,7 @@ const hash = () => page.evaluate(() => location.hash);
 const openNotes = () => page.evaluate(() => document.querySelectorAll('.note-details').forEach((d) => { d.open = true; }));
 const noHScroll = async () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
 
-await page.goto(BASE);
+await page.goto(BASE + '#/ai/classic');
 await page.waitForSelector('h1');
 check('Dashboard loads with empty state', (await text('.empty h2')).includes('No projects yet'));
 check('Dashboard: no horizontal scroll at 390px', await noHScroll());
@@ -105,7 +105,7 @@ await addReq('Can you make the site look more modern and improve the speed?', '2
 // 4. refresh persistence
 await page.reload(); await page.waitForSelector('.request');
 check('Persistence: requests survive refresh', await page.locator('.request').count() === 4);
-await page.goto(BASE + '#/'); await page.waitForSelector('.project-row');
+await page.goto(BASE + '#/ai/classic'); await page.waitForSelector('.project-row');
 check('Persistence: project listed after refresh', (await text('.project-name')).includes('Bakery site'));
 check('Dashboard: status preview shown', (await text('.project-status')).includes('4 client requests'));
 
@@ -240,7 +240,7 @@ check('Export: backup JSON has project', backup.app === 'ScopeLens' && backup.pr
 await page.setInputFiles('#import-file', bPath);
 await page.waitForSelector('#import-result .banner');
 check('Import: valid backup imported as copy', (await text('#import-result')).includes('Restored 1 project'));
-await page.goto(BASE + '#/'); await page.waitForSelector('.project-row');
+await page.goto(BASE + '#/ai/classic'); await page.waitForSelector('.project-row');
 check('Import: both original and imported copy listed', await page.locator('.project-row').count() === 2 && (await page.locator('.project-list').innerText()).includes('restored copy'));
 // corrupted
 const bad = (name, content) => { const p = path.join(tmp, name); fs.writeFileSync(p, content); return p; };
@@ -259,7 +259,7 @@ for (const [name, content, expect] of [
 const hostile = JSON.parse(JSON.stringify(backup)); hostile.projects[0].name = '<img src=x onerror=alert(1)>'; hostile.projects[0].requests[0].text = '<script>alert(1)</script>'; hostile.projects[0].comparisons[0].findings[0].type = 'bogus';
 await page.setInputFiles('#import-file', bad('hostile.json', JSON.stringify(hostile)));
 await page.waitForFunction(() => document.querySelector('#import-result')?.innerText.includes('Restored'));
-await page.goto(BASE + '#/'); await page.waitForSelector('.project-row');
+await page.goto(BASE + '#/ai/classic'); await page.waitForSelector('.project-row');
 check('Import: hostile markup is escaped, not executed', (await page.locator('.project-list img').count()) === 0);
 
 // 14. empty project compare
@@ -273,7 +273,7 @@ await page.goto(BASE + emptyHash + '/history'); await page.waitForSelector('.tim
 check('Empty project: overview & history render', true);
 
 // search, rename, archive, delete
-await page.goto(BASE + '#/'); await page.waitForSelector('.project-row');
+await page.goto(BASE + '#/ai/classic'); await page.waitForSelector('.project-row');
 await page.fill('#project-search', 'empty');
 check('Search: filters by name', await page.locator('.project-row').count() === 1);
 await page.fill('#project-search', 'zzzz');
@@ -306,13 +306,13 @@ check('Demo: loads on request and is labelled', true);
 await page.goto(BASE + '#/data'); await page.click('button[data-action="demo-remove"]'); await page.click('dialog button:has-text("Remove sample project")');
 await page.waitForFunction(() => document.querySelector('button[data-action="demo-remove"]')?.disabled);
 check('Demo: removed without touching real projects', true);
-await page.goto(BASE + '#/'); await page.waitForSelector('.project-row');
+await page.goto(BASE + '#/ai/classic'); await page.waitForSelector('.project-row');
 check('Real projects remain after demo removal', await page.locator('.project-row', { hasText: 'Bakery site' }).count() >= 1);
 
 // 16-17. mobile nav & keyboard
 await page.click('#navToggle'); 
 check('Mobile nav opens', await page.evaluate(() => document.body.classList.contains('nav-open')) && (await page.getAttribute('#navToggle', 'aria-expanded')) === 'true');
-await page.click('.sidebar a[href="#/about"]'); await page.waitForSelector('h1:has-text("How it works")');
+await page.click('.sidebar a[href="#/help"]'); await page.waitForSelector('h1:has-text("Help")');
 check('Mobile nav navigates and closes', !(await page.evaluate(() => document.body.classList.contains('nav-open'))));
 await page.click('#navToggle'); await page.keyboard.press('Escape');
 check('Mobile nav closes with Escape', !(await page.evaluate(() => document.body.classList.contains('nav-open'))));
@@ -327,10 +327,10 @@ check('Keyboard: focus visible outline style on focus', await page.evaluate(() =
 
 // desktop layout
 await page.setViewportSize({ width: 1280, height: 800 }); await page.goto(BASE + '#/'); await page.waitForTimeout(400);
-check('Desktop: sidebar visible, topbar hidden', await page.evaluate(() => (['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(getComputedStyle(document.querySelector('.sidebar')).transform)) && getComputedStyle(document.querySelector('.topbar')).display === 'none'));
+check('Desktop: sidebar visible', await page.evaluate(() => (['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(getComputedStyle(document.querySelector('.sidebar')).transform))));
 await page.screenshot({ path: path.join(tmp, '..', 'shot-desktop.png') });
 await page.setViewportSize({ width: 360, height: 740 });
-await page.goto(BASE + '#/about'); check('360px: no horizontal scroll', await noHScroll());
+await page.goto(BASE + '#/help'); check('360px: no horizontal scroll', await noHScroll());
 
 
 // storage failure: IndexedDB unavailable -> memory fallback with a clear warning
@@ -339,7 +339,7 @@ await page.goto(BASE + '#/about'); check('360px: no horizontal scroll', await no
   await ctx2.addInitScript(() => { Object.defineProperty(window, 'indexedDB', { get() { return undefined; } }); });
   const p2 = await ctx2.newPage();
   const errs2 = []; p2.on('pageerror', (e) => errs2.push(e.message));
-  await p2.goto(BASE); await p2.waitForSelector('.banner[role="alert"]');
+  await p2.goto(BASE + '#/ai/classic'); await p2.waitForSelector('.banner[role="alert"]');
   check('Storage failure: warning banner shown', (await p2.innerText('.banner[role="alert"]')).includes('not letting ScopeLens save'));
   await p2.goto(BASE + '#/new'); await p2.fill('#pf-name', 'Memory only'); await p2.click('form button[type=submit]');
   await p2.waitForSelector('form[data-form="scope"]');
