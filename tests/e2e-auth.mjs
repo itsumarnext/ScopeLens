@@ -29,7 +29,7 @@ console.log('logged-out gate');
 await go('clients'); ok((await hash()) === '#/login', 'protected page redirects to login');
 ok(!(await visible('.sidebar')), 'no app navigation on the login page');
 for (const r of ['', 'projects', 'payments', 'settings', 'ai', 'tasks/calendar', 'admin']) { await go(r); ok((await hash()) === '#/login', `#/${r} needs login`); }
-ok(/What ScopeLens collects/.test(await p.locator('body').innerText()), 'analytics disclosure shown');
+ok(/What WorkSphare collects/.test(await p.locator('body').innerText()), 'analytics disclosure shown');
 
 console.log('signup validation');
 await go('signup');

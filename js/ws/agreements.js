@@ -30,7 +30,7 @@ export function agreementFields(db, v = {}) {
     <div class="field-group">${f('clientId', 'Client', { kind: 'select', required: true, list: clientOptions(db, v.clientId), blank: 'Choose a client…', extra: 'data-role="ag-client"' })}
       <button type="button" class="btn btn-sm" data-action="quick-client">${icon('plus')}Add a new client</button></div>
     ${f('projectId', 'Linked project', { kind: 'select', list: projectOptions(db, v.clientId, v.projectId), blank: 'No project', value: v.projectId })}
-    ${f('scope', 'Agreed scope of work', { kind: 'textarea', rows: 8, max: 60000, hint: 'Type or paste the agreement text. This is what ScopeLens compares client requests against. One point per line works best.' })}
+    ${f('scope', 'Agreed scope of work', { kind: 'textarea', rows: 8, max: 60000, hint: 'Type or paste the agreement text. This is what WorkSphare compares client requests against. One point per line works best.' })}
     ${f('deliverables', 'Deliverables', { kind: 'textarea', rows: 3, max: 10000, hint: 'One item per line, like “5-page website”.' })}
     ${f('exclusions', 'Exclusions (not included)', { kind: 'textarea', rows: 3, max: 10000, hint: 'One item per line, like “online ordering”.' })}
     ${row2(f('revisions', 'Revision limit', { max: 400, placeholder: 'For example: Up to 2 rounds of revisions' }), f('status', 'Status', { kind: 'select', list: manual, value: v.status || 'Draft', hint: 'Expiring Soon and Expired are worked out from the end date.' }))}
@@ -65,7 +65,7 @@ function listHtml() {
     title: (x, y) => D.compareText(x.a.title, y.a.title),
     value: (x, y) => (y.a.value || 0) - (x.a.value || 0),
   }[st.sort] || (() => 0));
-  if (!db.agreements.length) return empty({ title: 'No agreements yet', text: 'Store what you agreed with a client. ScopeLens can then check new requests against it.', action: '<a class="btn btn-primary" href="#/agreements/add">Add an agreement</a>' });
+  if (!db.agreements.length) return empty({ title: 'No agreements yet', text: 'Store what you agreed with a client. WorkSphare can then check new requests against it.', action: '<a class="btn btn-primary" href="#/agreements/add">Add an agreement</a>' });
   return table({
     list: 'agreements', rows, caption: 'Agreements', empty: empty({ title: 'No agreements match', text: 'Try a different search or filter.' }),
     cols: [
@@ -103,7 +103,7 @@ function viewAdd(query) {
   const clientId = D.byId(db.clients, query.client) ? query.client : proj ? proj.clientId : '';
   return {
     title: 'Add agreement', nav: 'agreements',
-    html: `${head('add', 'Add an agreement', 'Everything you type here is saved as you entered it. ScopeLens does not check it against any contract template.')}
+    html: `${head('add', 'Add an agreement', 'Everything you type here is saved as you entered it. WorkSphare does not check it against any contract template.')}
       <form class="form card" data-form="agr-add" novalidate>${formError()}${agreementFields(db, { clientId, projectId: proj ? proj.id : '', status: 'Active', startDate: today() })}
         <div class="form-actions"><a class="btn" href="#/agreements">Cancel</a><button class="btn btn-primary" type="submit">Save agreement</button></div></form>`,
   };
@@ -136,7 +136,7 @@ function viewDetails(id) {
   return {
     title: a.title, nav: 'agreements',
     html: `${head('details', a.title, `${D.clientName(db, a.clientId) || 'Client removed'}`, `<button type="button" class="btn" data-action="agr-edit" data-id="${esc(id)}">${icon('edit')}Edit</button><a class="btn" href="#/agreements/details">${icon('chevron-left')}All agreements</a>`)}
-      <p class="note">${icon('info')}<span>Everything below was typed, pasted or read from a text file by you. ScopeLens does not read PDF or Word files and does not check this against a contract.</span></p>
+      <p class="note">${icon('info')}<span>Everything below was typed, pasted or read from a text file by you. WorkSphare does not read PDF or Word files and does not check this against a contract.</span></p>
       ${card(`<div class="card-head"><h2>Summary</h2><div class="chips">${badge(v.status)}${v.renewed ? badge('Renewed', 'muted') : ''}</div></div>
         ${dl([['Client', clientLink(db, a.clientId)], ['Linked project', a.projectId ? projectLink(db, a.projectId) : ''], ['Start date', a.startDate ? esc(fmt.date(a.startDate)) : ''], ['End date', a.endDate ? `${esc(fmt.date(a.endDate))}${v.daysLeft !== null && a.status === 'Active' ? ` <span class="small muted">(${v.daysLeft < 0 ? `ended ${-v.daysLeft} day${v.daysLeft === -1 ? '' : 's'} ago` : v.daysLeft === 0 ? 'today' : `in ${v.daysLeft} day${v.daysLeft === 1 ? '' : 's'}`})</span>` : ''}` : ''], ['Value', a.value === '' ? '' : esc(fmt.money(a.value))], ['Renewal', renewedTo ? `Renewed as <a href="#/agreements/details/${esc(renewedTo.id)}">${esc(renewedTo.title)}</a>` : renewalOf ? `Renewal of <a href="#/agreements/details/${esc(renewalOf.id)}">${esc(renewalOf.title)}</a>` : v.renewed ? 'Marked as renewed' : '']])}
         <div class="card-actions"><button type="button" class="btn btn-sm" data-action="agr-renew" data-id="${esc(id)}">${icon('rotate')}Create renewal</button>${v.renewed ? '' : `<button type="button" class="btn btn-sm" data-action="agr-markrenewed" data-id="${esc(id)}">Mark as renewed</button>`}<button type="button" class="btn btn-sm" data-action="ai-start" data-client="${esc(a.clientId)}" data-agreement="${esc(id)}" data-project="${esc(a.projectId || '')}">${icon('spark')}Compare a request</button>
@@ -252,7 +252,7 @@ export const changes = {
         else note.textContent = 'The file will be saved. The agreement text box already has text, so it was left as it is.';
       } catch { note.textContent = 'The file could not be read as text. It will still be saved.'; }
     } else {
-      note.textContent = 'ScopeLens cannot read the words inside this kind of file. It will be saved on this device. To compare requests against it, paste the text into the agreement text box.';
+      note.textContent = 'WorkSphare cannot read the words inside this kind of file. It will be saved on this device. To compare requests against it, paste the text into the agreement text box.';
     }
   },
   'warn-days': (el) => {

@@ -1,4 +1,4 @@
-// A small in-memory imitation of the Supabase endpoints ScopeLens uses, installed with Playwright
+// A small in-memory imitation of the Supabase endpoints WorkSphare uses, installed with Playwright
 // request interception. It lets the browser tests run without internet or a real project.
 // It mirrors the rules of supabase/migrations/001_auth_analytics.sql (tested separately in PostgreSQL).
 export const SUPA = 'https://yrkvlunvpjmuprlftauy.supabase.co';

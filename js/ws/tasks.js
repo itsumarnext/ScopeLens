@@ -189,7 +189,7 @@ function viewLog() {
   const st = listState('log', LOG_DEFAULTS);
   return {
     title: 'Activity log', nav: 'tasks',
-    html: `${head('log', 'Activity log', 'A record of what you did in ScopeLens. It does not track emails, calls or messages unless you add them yourself.', `<button type="button" class="btn" data-action="note-new">${icon('plus')}Add a note</button>`)}
+    html: `${head('log', 'Activity log', 'A record of what you did in WorkSphare. It does not track emails, calls or messages unless you add them yourself.', `<button type="button" class="btn" data-action="note-new">${icon('plus')}Add a note</button>`)}
       ${filterBar('log', st, { placeholder: 'Search the log', selects: [{ key: 'group', label: 'Type', options: [{ value: 'all', label: 'Everything' }, ...Object.entries(GROUPS).map(([value, [label]]) => ({ value, label }))] }, { key: 'client', label: 'Client', options: [{ value: 'all', label: 'All clients' }, ...clientOptions(db)] }] })}
       <div id="list-log" aria-live="polite">${logHtml()}</div>`,
   };
@@ -270,7 +270,7 @@ export const actions = {
   'note-new': async () => {
     const db = S.data();
     const done = await formDialog({
-      title: 'Add a note to the log', intro: 'Use this to record things ScopeLens cannot see, like a phone call or a meeting.', submitLabel: 'Add note', wide: true,
+      title: 'Add a note to the log', intro: 'Use this to record things WorkSphare cannot see, like a phone call or a meeting.', submitLabel: 'Add note', wide: true,
       bodyHtml: `${field({ id: 'nt-text', name: 'text', label: 'What happened?', kind: 'textarea', rows: 3, required: true, max: 600 })}${row2(field({ id: 'nt-client', name: 'clientId', label: 'Client', kind: 'select', list: clientOptions(db), blank: 'No client' }), field({ id: 'nt-project', name: 'projectId', label: 'Project', kind: 'select', list: projectOptions(db), blank: 'No project' }))}`,
       onSubmit: (raw) => {
         const text = String(raw.text || '').trim();

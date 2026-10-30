@@ -305,7 +305,7 @@ export const actions = {
     if (!c) return;
     const linked = linkedCounts(db, c.id);
     if (linked.length) {
-      const archive = await confirmDialog({ title: 'This client has linked records', message: `${c.name} has ${linked.join(', ')}. To keep your records safe, ScopeLens will not delete a client that other records depend on. You can archive the client instead.`, confirmLabel: c.status === 'Archived' ? 'OK' : 'Archive instead', cancelLabel: 'Close' });
+      const archive = await confirmDialog({ title: 'This client has linked records', message: `${c.name} has ${linked.join(', ')}. To keep your records safe, WorkSphare will not delete a client that other records depend on. You can archive the client instead.`, confirmLabel: c.status === 'Archived' ? 'OK' : 'Archive instead', cancelLabel: 'Close' });
       if (archive && c.status !== 'Archived') { saveWithToast(() => { S.patch('clients', c.id, { status: 'Archived', prevStatus: c.status }); S.log('client_archived', `Client archived: ${c.name}`, { clientId: c.id }); }, 'Client archived.'); refresh(); }
       return;
     }

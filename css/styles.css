@@ -1,4 +1,4 @@
-/* ScopeLens — calm, spacious, neutral. White surfaces, charcoal text, grey borders.
+/* WorkSphare — calm, spacious, neutral. White surfaces, charcoal text, grey borders.
    One subtle purple accent is used only for focus, active states and the "next step" card.
 
    Spacing scale (use only these): 4, 8, 12, 16, 24, 32, 40.
@@ -548,3 +548,8 @@ body:not(.signed-in) .sidebar .side-account { display: none; }
 .chart-bar:hover { fill: var(--ink); }
 .chart-line { stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
 .chart-dot { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
+
+/* Brand logo image (WorkSphare) */
+.brand-logo { display: block; height: 34px; width: auto; max-width: 100%; }
+.auth-brand .brand-logo { height: 44px; }
+.topbar .brand-logo { height: 30px; }

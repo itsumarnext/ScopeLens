@@ -368,10 +368,10 @@ export function searchProjects(projects, query) {
 
 export function exportEnvelope(projects) {
   return {
-    app: 'ScopeLens',
+    app: 'WorkSphare',
     schema: SCHEMA_VERSION,
     exportedAt: nowISO(),
-    note: 'ScopeLens backup. This is a plain, unlocked file. Keep it somewhere safe and private.',
+    note: 'WorkSphare backup. This is a plain, unlocked file. Keep it somewhere safe and private.',
     projects,
   };
 }
@@ -528,10 +528,10 @@ export function validateImport(data) {
   const errors = [];
   const warnings = [];
   const projects = [];
-  if (!isObj(data)) return { projects, errors: ['This is not a ScopeLens backup file.'], warnings };
-  if (data.app !== 'ScopeLens') return { projects, errors: ['This does not look like a ScopeLens backup file.'], warnings };
+  if (!isObj(data)) return { projects, errors: ['This is not a WorkSphare backup file.'], warnings };
+  if (data.app !== 'WorkSphare' && data.app !== 'ScopeLens') return { projects, errors: ['This does not look like a WorkSphare backup file.'], warnings };
   if (typeof data.schema !== 'number' || data.schema < 1) return { projects, errors: ['This backup file is missing its version number.'], warnings };
-  if (data.schema > SCHEMA_VERSION) return { projects, errors: [`This backup was made by a newer version of ScopeLens. Update the app and try again.`], warnings };
+  if (data.schema > SCHEMA_VERSION) return { projects, errors: [`This backup was made by a newer version of WorkSphare. Update the app and try again.`], warnings };
   if (!Array.isArray(data.projects)) return { projects, errors: ['This backup file has no projects in it.'], warnings };
   if (data.projects.length > 500) warnings.push('Only the first 500 projects were restored.');
   data.projects.slice(0, 500).forEach((raw, i) => {
@@ -559,7 +559,7 @@ export function buildDemoProject() {
   const p = newProject({
     name: 'Sunrise Bakery website (sample)',
     client: 'Sample client',
-    description: 'A made-up project so you can try ScopeLens. You can remove it any time from the Backups page.',
+    description: 'A made-up project so you can try WorkSphare. You can remove it any time from the Backups page.',
     startDate: offsetDate(-30),
     budget: '45000',
     currency: 'INR',

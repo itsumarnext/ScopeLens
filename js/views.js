@@ -166,7 +166,7 @@ export function viewOverview(p) {
     { done: true, label: 'Create a project', text: 'Done.', title: '', cta: '', href: `#/p/${p.id}` },
     {
       done: !!p.baseline, label: 'Add the original agreement', text: p.baseline ? `Saved ${fmtDate(p.baseline.updatedAt)}.` : 'What you and your client agreed to do.',
-      title: 'Add the original agreement', help: 'Paste what you and your client agreed to do. ScopeLens checks new requests against it.', cta: 'Add agreement', href: `#/p/${p.id}/scope`,
+      title: 'Add the original agreement', help: 'Paste what you and your client agreed to do. WorkSphare checks new requests against it.', cta: 'Add agreement', href: `#/p/${p.id}/scope`,
     },
     {
       done: p.requests.length > 0, label: 'Add client requests', text: p.requests.length ? `${plural(p.requests.length, 'request')} added.` : 'Add each new thing your client asks for.',
@@ -174,7 +174,7 @@ export function viewOverview(p) {
     },
     {
       done: p.comparisons.length > 0, label: 'Compare', text: p.comparisons.length ? `${plural(p.comparisons.length, 'comparison')} saved.` : 'Check the requests against the agreement.',
-      title: 'Compare the requests with the agreement', help: 'ScopeLens points out what may be new, changed or unclear.', cta: 'Compare now', href: `#/p/${p.id}/compare`,
+      title: 'Compare the requests with the agreement', help: 'WorkSphare points out what may be new, changed or unclear.', cta: 'Compare now', href: `#/p/${p.id}/compare`,
     },
     {
       done: !!rs && rs.pending === 0, label: 'Review the results', text: rs ? `${rs.reviewed} of ${rs.flagged} reviewed.` : 'Mark each result and add notes.',
@@ -224,7 +224,7 @@ export function scopeFormHtml(p, values = null) {
   const v = values || (b ? { title: b.title, date: b.date, text: b.text } : { title: 'Original agreement', date: '', text: '' });
   return `<form class="card form" data-form="scope" novalidate>
     <h2>${b ? 'Change the original agreement' : 'Add the original agreement'}</h2>
-    ${b ? '<div class="banner"><p><strong>You are changing the agreement ScopeLens compares against.</strong> New comparisons will use this text. Comparisons you already made keep the old text, and the old version is saved as an earlier version.</p></div>' : ''}
+    ${b ? '<div class="banner"><p><strong>You are changing the agreement WorkSphare compares against.</strong> New comparisons will use this text. Comparisons you already made keep the old text, and the old version is saved as an earlier version.</p></div>' : ''}
     <p class="form-error" data-form-error role="alert" tabindex="-1"></p>
     ${field({ id: 'sf-title', name: 'title', label: 'Title', value: v.title, attrs: 'maxlength="120" autocomplete="off"' })}
     ${field({ id: 'sf-date', name: 'date', label: 'Date agreed', type: 'date', value: v.date })}
@@ -268,7 +268,7 @@ export function viewRequests(p) {
         </div>
         <p class="request-text">${esc(r.text)}</p>
         ${r.reference || r.notes ? `<div class="request-extra">${r.reference ? `<p><span class="label-inline">Subject:</span> ${esc(r.reference)}</p>` : ''}${r.notes ? `<p><span class="label-inline">Your notes:</span> ${esc(r.notes)}</p>` : ''}</div>` : ''}
-        <p class="stamp">Added to ScopeLens ${esc(fmtDateTime(r.createdAt))}${r.updatedAt !== r.createdAt ? ` · changed ${esc(fmtDateTime(r.updatedAt))}` : ''}</p>
+        <p class="stamp">Added to WorkSphare ${esc(fmtDateTime(r.createdAt))}${r.updatedAt !== r.createdAt ? ` · changed ${esc(fmtDateTime(r.updatedAt))}` : ''}</p>
       </li>`).join('')}</ol>`
     : emptyState({
       title: 'No client requests yet',
@@ -276,7 +276,7 @@ export function viewRequests(p) {
       action: `<button type="button" class="btn btn-primary" data-action="request-add">${icon('plus')}Add a client request</button>`,
     });
   return `${projectHeader(p, 'requests')}
-    ${sectionHead('Client requests', 'Everything your client has asked for, oldest first. The dates are the ones you typed in. ScopeLens cannot check them with your email or chat app.',
+    ${sectionHead('Client requests', 'Everything your client has asked for, oldest first. The dates are the ones you typed in. WorkSphare cannot check them with your email or chat app.',
       list.length ? `<button type="button" class="btn btn-primary" data-action="request-add">${icon('plus')}Add a client request</button>` : '')}
     ${body}`;
 }
@@ -289,7 +289,7 @@ export function viewCompare(p, form = {}) {
   const selected = form.selected || new Set(reqs.map((r) => r.id));
   let body;
   if (!p.baseline) {
-    body = emptyState({ title: 'Add the original agreement first', text: 'ScopeLens needs it to check new requests against.', action: `<a class="btn btn-primary" href="#/p/${esc(p.id)}/scope">Add agreement</a>` });
+    body = emptyState({ title: 'Add the original agreement first', text: 'WorkSphare needs it to check new requests against.', action: `<a class="btn btn-primary" href="#/p/${esc(p.id)}/scope">Add agreement</a>` });
   } else {
     body = `<form class="card form" data-form="compare" novalidate>
       <h2>Start a comparison</h2>
@@ -308,9 +308,9 @@ export function viewCompare(p, form = {}) {
         : `<div class="banner"><p>No client requests yet. <a href="#/p/${esc(p.id)}/requests">Add a client request</a> first, or choose “A new version of the agreement”.</p></div>`}
       </div>
       <div data-section="manual" ${mode === 'manual' ? '' : 'hidden'}>
-        ${field({ id: 'cf-manual', name: 'manualText', label: 'New version of the agreement', type: 'textarea', rows: 10, value: form.manualText || '', required: true, hint: 'Paste the whole new version. ScopeLens compares it with the original, point by point.', attrs: 'maxlength="60000"' })}
+        ${field({ id: 'cf-manual', name: 'manualText', label: 'New version of the agreement', type: 'textarea', rows: 10, value: form.manualText || '', required: true, hint: 'Paste the whole new version. WorkSphare compares it with the original, point by point.', attrs: 'maxlength="60000"' })}
       </div>
-      <p class="note">${icon('info')}<span>ScopeLens looks for matching words and a few simple clues. It cannot read meaning, so treat the results as hints, not answers.</span></p>
+      <p class="note">${icon('info')}<span>WorkSphare looks for matching words and a few simple clues. It cannot read meaning, so treat the results as hints, not answers.</span></p>
       <div class="form-actions"><button class="btn btn-primary" type="submit">${icon('compare')}Compare</button></div>
     </form>`;
   }
@@ -397,7 +397,7 @@ export function findingsListHtml(findings, type, status, mode = 'requests') {
   if (!list.length) {
     const flagged = findings.filter((f) => f.type !== 'unchanged').length;
     if (!flagged && type === 'changes' && status === 'all') {
-      return emptyState({ title: 'No changes found', text: 'Nothing here seems to go beyond the original agreement. ScopeLens only matches words, so it can miss a request that uses different words. Read the requests yourself too.' });
+      return emptyState({ title: 'No changes found', text: 'Nothing here seems to go beyond the original agreement. WorkSphare only matches words, so it can miss a request that uses different words. Read the requests yourself too.' });
     }
     return emptyState({ title: 'Nothing to show', text: 'No results match these choices. Try changing “Show” or “Review”.' });
   }
@@ -466,11 +466,11 @@ export function viewHistory(p) {
   const body = groups.length ? groups.map((g) => `<section class="history-day" aria-label="${esc(g.day)}"><h3>${esc(g.day)}</h3><ol class="timeline">${g.items.map((e) => {
     const m = e.meta || {};
     const extra = (e.type === 'request_added' || e.type === 'request_edited') && m.receivedDate
-      ? `<p class="muted small">The client sent it on ${esc(fmtDate(m.receivedDate))}${m.source ? ` (${esc(m.source)})` : ''}, as you entered it. Added to ScopeLens ${esc(fmtDateTime(e.at))}.</p>` : '';
+      ? `<p class="muted small">The client sent it on ${esc(fmtDate(m.receivedDate))}${m.source ? ` (${esc(m.source)})` : ''}, as you entered it. Added to WorkSphare ${esc(fmtDateTime(e.at))}.</p>` : '';
     return `<li><span class="tl-mark" aria-hidden="true"></span><div class="tl-body"><p class="tl-title"><strong>${esc(historyLabel(e.type))}</strong> <span class="muted small">${esc(fmtDateTime(e.at))}</span></p><p>${esc(e.text)}</p>${extra}</div></li>`;
   }).join('')}</ol></section>`).join('') : emptyState({ title: 'No history yet', text: 'What happens in this project will be listed here.' });
   return `${projectHeader(p, 'history')}
-    ${sectionHead('History', 'Everything that happened in this project, newest first. Times come from this device. Dates for client requests are the ones you typed in. ScopeLens cannot check them.')}${body}`;
+    ${sectionHead('History', 'Everything that happened in this project, newest first. Times come from this device. Dates for client requests are the ones you typed in. WorkSphare cannot check them.')}${body}`;
 }
 
 /* ---------------------------------- report ---------------------------------- */
@@ -497,7 +497,7 @@ export function viewData({ count, hasDemo, mode, modeError, persist, importResul
       <div class="card-actions"><button type="button" class="btn btn-primary" data-action="export-all" ${count ? '' : 'disabled'}>${icon('download')}Download all projects</button></div>
       ${count ? '' : '<p class="muted small">You have no projects to download yet.</p>'}</section>
     <section class="card"><div><h2>Restore a backup</h2>
-      <p class="muted">Choose a ScopeLens backup file. It is checked first. Nothing you already have is replaced. If a project is already here, the restored one is added as a copy.</p></div>
+      <p class="muted">Choose a WorkSphare backup file. It is checked first. Nothing you already have is replaced. If a project is already here, the restored one is added as a copy.</p></div>
       <div class="field"><label for="import-file">Backup file (.json)</label><input id="import-file" class="input" type="file" accept=".json,application/json" data-role="import-file"></div>
       <div id="import-result" aria-live="polite">${importResult || ''}</div></section>
     <section class="card"><h2>Where your projects are kept</h2>
@@ -509,7 +509,7 @@ export function viewData({ count, hasDemo, mode, modeError, persist, importResul
       ${persist.supported ? `<p>Extra protection from the browser: <strong>${persist.persisted ? 'on' : 'off'}</strong>${persist.usage != null ? ` · using ${esc(fmtBytes(persist.usage))}` : ''}</p>
         ${persist.persisted ? '' : '<div class="card-actions"><button type="button" class="btn btn-sm" data-action="persist-request">Ask the browser to keep my projects</button></div>'}` : '<p class="muted">This browser does not say whether it will keep your projects.</p>'}</section>
     <section class="card"><div><h2>Sample project</h2>
-      <p class="muted">Try ScopeLens with a made-up project. It is labelled “Sample project” and kept apart from your real work. You can remove it in one tap.</p></div>
+      <p class="muted">Try WorkSphare with a made-up project. It is labelled “Sample project” and kept apart from your real work. You can remove it in one tap.</p></div>
       <div class="card-actions"><button type="button" class="btn" data-action="demo-load">Add the sample project</button>
         <button type="button" class="btn btn-danger-outline" data-action="demo-remove" ${hasDemo ? '' : 'disabled'}>${icon('trash')}Remove the sample project…</button></div></section>`;
 }
@@ -517,19 +517,19 @@ export function viewData({ count, hasDemo, mode, modeError, persist, importResul
 /* ---------------------------------- about ---------------------------------- */
 
 export function viewAbout() {
-  return `${pageHead('How it works', { sub: 'What ScopeLens does, how it finds changes, and where it can be wrong.' })}
+  return `${pageHead('How it works', { sub: 'What WorkSphare does, how it finds changes, and where it can be wrong.' })}
     <section class="card"><h2>Six simple steps</h2>
       <ol class="plain-bullets"><li>Create a project.</li><li>Add the original agreement: what you and your client agreed to do.</li><li>Add each new request from your client.</li><li>Compare the requests with the agreement.</li><li>Review the results. Say if each one is a real change, not a change, or something to ask your client.</li><li>Create a report to talk it through with your client.</li></ol></section>
-    <section class="card"><h2>How ScopeLens finds changes</h2>
+    <section class="card"><h2>How WorkSphare finds changes</h2>
       <p class="muted">Everything happens in your browser, with fixed rules. There is no AI, and no project data is uploaded.</p>
       <ul class="plain-bullets">
         <li><strong>Word changes</strong> compares the words in two texts. It ignores capital letters, punctuation and line breaks, so a tidy-up is not counted as a change.</li>
         <li><strong>Results</strong> split the agreement and the requests into separate points, then match points that share many key words.</li>
         <li>Words like “remove”, “drop”, “change to” and “instead of” help link a request to the part of the agreement it may affect.</li>
         <li>Vague words like “etc”, “as needed” or “improve” are marked as unclear.</li>
-        <li>If a request mentions something your agreement says is <em>not</em> included, ScopeLens shows that sentence next to it.</li>
+        <li>If a request mentions something your agreement says is <em>not</em> included, WorkSphare shows that sentence next to it.</li>
       </ul></section>
-    <section class="card"><h2>What ScopeLens cannot do</h2>
+    <section class="card"><h2>What WorkSphare cannot do</h2>
       <ul class="plain-bullets">
         <li>It matches words, not meaning. Different words for the same thing can look new. Similar words for different things can look the same.</li>
         <li>If one sentence holds several requests, it is treated as one.</li>

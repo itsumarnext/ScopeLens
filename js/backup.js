@@ -10,7 +10,8 @@ import {
 import { CURRENCIES, DATE_FORMATS, NUMBER_LOCALES } from './fmt.js';
 
 export const SCHEMA = 1;
-export const APP_NAME = 'ScopeLens';
+export const APP_NAME = 'WorkSphare';
+export const LEGACY_APP_NAMES = ['ScopeLens']; // backups made before the rename are still accepted
 export const COLLECTIONS = ['clients', 'leads', 'projects', 'agreements', 'invoices', 'transactions', 'tasks', 'comparisons', 'scopeChanges', 'activity'];
 export const LABELS = {
   clients: 'clients', leads: 'leads', projects: 'projects', agreements: 'agreements', invoices: 'invoices',
@@ -163,7 +164,7 @@ function sanitizeActivity(raw) {
 export function sanitizeDb(raw) {
   const warnings = [];
   const errors = [];
-  if (!isObj(raw)) return { db: null, warnings, errors: ['This is not a ScopeLens workspace.'] };
+  if (!isObj(raw)) return { db: null, warnings, errors: ['This is not a WorkSphare workspace.'] };
   const out = emptyDb();
   out.createdAt = isoOr(raw.createdAt);
   out.updatedAt = isoOr(raw.updatedAt);
@@ -237,13 +238,13 @@ export function exportEnvelope(db) {
 
 /** Checks a parsed backup file. Returns { ok, errors, warnings, db, counts }. */
 export function validateBackup(parsed) {
-  if (!isObj(parsed)) return { ok: false, errors: ['This file is not a ScopeLens backup.'], warnings: [] };
-  if (parsed.app !== APP_NAME) return { ok: false, errors: ['This does not look like a ScopeLens backup file.'], warnings: [] };
+  if (!isObj(parsed)) return { ok: false, errors: ['This file is not a WorkSphare backup.'], warnings: [] };
+  if (parsed.app !== APP_NAME && !LEGACY_APP_NAMES.includes(parsed.app)) return { ok: false, errors: ['This does not look like a WorkSphare backup file.'], warnings: [] };
   if (parsed.kind !== 'workspace-backup') {
     return { ok: false, errors: [parsed.kind || parsed.projects ? 'This is a backup from the Classic projects page. Restore it from Classic projects → Backups.' : 'This is not a workspace backup.'], warnings: [] };
   }
   if (typeof parsed.schema !== 'number' || parsed.schema < 1) return { ok: false, errors: ['This backup is missing its version number.'], warnings: [] };
-  if (parsed.schema > SCHEMA) return { ok: false, errors: ['This backup was made by a newer version of ScopeLens. Update the app and try again.'], warnings: [] };
+  if (parsed.schema > SCHEMA) return { ok: false, errors: ['This backup was made by a newer version of WorkSphare. Update the app and try again.'], warnings: [] };
   const { db, warnings, errors } = sanitizeDb(parsed.data);
   if (!db) return { ok: false, errors, warnings };
   const counts = Object.fromEntries(COLLECTIONS.map((c) => [c, db[c].length]));

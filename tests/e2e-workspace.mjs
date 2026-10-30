@@ -105,7 +105,7 @@ console.log('settings: export, import, clear');
 await go('settings');
 const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#view [data-action="data-export"]')]);
 const path = await dl.path(); const fs = await import('node:fs'); const exported = JSON.parse(fs.readFileSync(path, 'utf8'));
-ok(exported.app === 'ScopeLens' && exported.data.clients.length === 1, 'export has data');
+ok(exported.app === 'WorkSphare' && exported.data.clients.length === 1, 'export has data');
 fs.writeFileSync('/tmp/bad.json', '{"hello":1}');
 await p.setInputFiles('[data-role="data-import"]', '/tmp/bad.json'); await p.waitForTimeout(400);
 d = await db(); ok(d.clients.length === 1, 'invalid import leaves data alone');

@@ -32,7 +32,7 @@ export function init() {
   const r = readRaw();
   if (!r.ok) {
     health.mode = 'memory';
-    health.message = 'Your browser is not letting ScopeLens save data (this can happen in private browsing). Everything you add will be lost when you close or refresh this page. Download a backup often from Settings.';
+    health.message = 'Your browser is not letting WorkSphare save data (this can happen in private browsing). Everything you add will be lost when you close or refresh this page. Download a backup often from Settings.';
     db = emptyDb();
   } else if (r.raw === null) {
     db = emptyDb();
@@ -46,8 +46,8 @@ export function init() {
       const key = `${DATA_KEY}_unreadable_${Date.now()}`;
       try { localStorage.setItem(key, r.raw); health.savedBackupKey = key; } catch { /* nothing more we can do */ }
       health.message = tooNew
-        ? 'The saved data was made by a newer version of ScopeLens, so it was left untouched and a copy was kept. Update the app to open it.'
-        : 'The saved data could not be read, so ScopeLens started with an empty workspace. A copy of the unreadable data was kept in this browser in case it can be recovered.';
+        ? 'The saved data was made by a newer version of WorkSphare, so it was left untouched and a copy was kept. Update the app to open it.'
+        : 'The saved data could not be read, so WorkSphare started with an empty workspace. A copy of the unreadable data was kept in this browser in case it can be recovered.';
       db = emptyDb();
     } else {
       db = clean.db;
@@ -66,7 +66,7 @@ function persist() {
   try {
     localStorage.setItem(DATA_KEY, JSON.stringify(db));
   } catch (e) {
-    if (quotaLike(e)) throw new StoreError('This browser has no room left for ScopeLens data. Download a backup, then delete things you no longer need (old saved comparisons use the most space).');
+    if (quotaLike(e)) throw new StoreError('This browser has no room left for WorkSphare data. Download a backup, then delete things you no longer need (old saved comparisons use the most space).');
     throw new StoreError('Could not save to this browser. Your change was not kept.');
   }
 }

@@ -154,7 +154,7 @@ test('import validation: accepts round trip, rejects garbage', () => {
   const ok = validateImport(JSON.parse(JSON.stringify(exportEnvelope([p]))));
   assert.equal(ok.errors.length, 0);
   assert.equal(ok.projects[0].comparisons[0].findings.length, p.comparisons[0].findings.length);
-  for (const bad of [null, 5, 'x', [], {}, { app: 'ScopeLens' }, { app: 'ScopeLens', schema: 1 }, { app: 'ScopeLens', schema: 1, projects: [{}] }, { app: 'ScopeLens', schema: 9, projects: [] }]) {
+  for (const bad of [null, 5, 'x', [], {}, { app: 'WorkSphare' }, { app: 'WorkSphare', schema: 1 }, { app: 'WorkSphare', schema: 1, projects: [{}] }, { app: 'WorkSphare', schema: 9, projects: [] }]) {
     assert.ok(validateImport(bad).errors.length > 0, JSON.stringify(bad));
   }
   const evil = JSON.parse(JSON.stringify(exportEnvelope([p])));

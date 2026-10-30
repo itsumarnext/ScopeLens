@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="ScopeLens is a workspace for freelancers: clients, projects, payments, agreements, tasks and scope-creep checks. Everything stays in your browser.">
+  <meta name="description" content="WorkSphare is a workspace for freelancers: clients, projects, payments, agreements, tasks and scope-creep checks. Your business data stays in your browser.">
   <!-- Privacy: this policy stops the page from contacting any other site. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://yrkvlunvpjmuprlftauy.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>ScopeLens</title>
-  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <title>WorkSphare</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -58,7 +59,7 @@
       <button type="button" id="navToggle" class="icon-btn" data-action="toggle-nav" aria-label="Menu" aria-controls="sidebar" aria-expanded="false">
         <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-menu"></use></svg>
       </button>
-      <a class="brand" href="#/"><img src="assets/logo.svg" alt="" width="28" height="28"><span>ScopeLens</span></a>
+      <a class="brand" href="#/" aria-label="WorkSphare home"><img class="brand-logo" src="assets/worksphare-logo.png" alt="WorkSphare" width="152" height="36"></a>
       <div class="topbar-end">
         <span class="chip storage-chip" id="storage-chip" title="Your data is saved only in this browser">Saved in this browser</span>
         <div id="quick-add"></div>
@@ -66,7 +67,7 @@
     </header>
 
     <aside class="sidebar no-print" id="sidebar" aria-label="Primary">
-      <a class="brand" href="#/"><img src="assets/logo.svg" alt="" width="30" height="30"><span>ScopeLens</span></a>
+      <a class="brand" href="#/" aria-label="WorkSphare home"><img class="brand-logo" src="assets/worksphare-logo.png" alt="WorkSphare" width="152" height="36"></a>
       <p class="tagline">Your client business, in one place.</p>
       <nav class="nav" aria-label="Main">
         <a class="nav-link" href="#/" data-nav="dashboard"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-grid"></use></svg>Dashboard</a>
@@ -75,7 +76,7 @@
         <a class="nav-link" href="#/payments" data-nav="payments"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-wallet"></use></svg>Payments</a>
         <a class="nav-link" href="#/agreements" data-nav="agreements"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-file"></use></svg>Agreements</a>
         <a class="nav-link" href="#/tasks" data-nav="tasks"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-tasks"></use></svg>Activity &amp; Tasks</a>
-        <a class="nav-link" href="#/ai" data-nav="ai"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-spark"></use></svg>ScopeLens AI</a>
+        <a class="nav-link" href="#/ai" data-nav="ai"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-spark"></use></svg>WorkSphare AI</a>
       </nav>
       <nav class="nav nav-bottom" aria-label="Settings and help">
         <a class="nav-link" href="#/admin" data-nav="admin" id="admin-link" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-shield"></use></svg>Admin</a>
@@ -88,7 +89,7 @@
     <div class="scrim no-print" data-action="close-nav" hidden></div>
 
     <main class="main" id="view" tabindex="-1" aria-live="off">
-      <noscript><p class="banner">ScopeLens needs JavaScript to work. Your business data stays in your browser.</p></noscript>
+      <noscript><p class="banner">WorkSphare needs JavaScript to work. Your business data stays in your browser.</p></noscript>
       <p class="muted">Loading…</p>
     </main>
   </div>

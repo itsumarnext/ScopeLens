@@ -26,7 +26,7 @@ export async function init(onRoute) {
     if (frag.error) { flash = { error: true, text: 'That link is invalid or has expired. Please request a new one.' }; location.hash = '#/login'; }
     else if (frag.type === 'recovery') { recovery = frag; location.hash = '#/reset-password'; }
     else {
-      try { await C.adoptTokens(frag); flash = { text: 'Your email is confirmed. Welcome to ScopeLens.' }; location.hash = '#/'; }
+      try { await C.adoptTokens(frag); flash = { text: 'Your email is confirmed. Welcome to WorkSphare.' }; location.hash = '#/'; }
       catch (e) { flash = { error: true, text: C.friendly(e) }; location.hash = '#/login'; }
     }
   }

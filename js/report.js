@@ -113,25 +113,25 @@ export function buildReportBody(project, comparison, { generatedAt = new Date().
   ].filter(Boolean);
 
   const reqList = comparison.requests.length
-    ? `<h2>Client requests checked</h2><p class="r-note">“Received” is the date the user typed in. “Saved” is when it was added to ScopeLens. Neither date was checked with the email or chat app.</p><ul class="r-list">${comparison.requests.map((r) =>
+    ? `<h2>Client requests checked</h2><p class="r-note">“Received” is the date the user typed in. “Saved” is when it was added to WorkSphare. Neither date was checked with the email or chat app.</p><ul class="r-list">${comparison.requests.map((r) =>
       `<li><strong>Received ${esc(fmtDate(r.date) || 'date not given')}</strong>${r.source ? ` by ${esc(r.source)}` : ''}${r.reference ? ` (${esc(r.reference)})` : ''}; saved ${esc(fmtDateTime(r.enteredAt))}<br>${esc(truncate(r.text, 220))}</li>`).join('')}</ul>`
     : '';
 
   const decisionsHtml = decided.length
-    ? `<h2>What you confirmed (${decided.length})</h2><p class="r-note">These are the items marked “Real change”. Everything else below is only what ScopeLens noticed, and has not been confirmed.</p><ul class="r-list">${decided.map((f) => `<li><strong>${esc(f.title)}</strong>${f.note ? `: ${esc(f.note)}` : ''}</li>`).join('')}</ul>`
-    : `<h2>What you confirmed</h2><p class="r-note">Nothing has been marked “Real change” yet. Everything below is only what ScopeLens noticed.</p>`;
+    ? `<h2>What you confirmed (${decided.length})</h2><p class="r-note">These are the items marked “Real change”. Everything else below is only what WorkSphare noticed, and has not been confirmed.</p><ul class="r-list">${decided.map((f) => `<li><strong>${esc(f.title)}</strong>${f.note ? `: ${esc(f.note)}` : ''}</li>`).join('')}</ul>`
+    : `<h2>What you confirmed</h2><p class="r-note">Nothing has been marked “Real change” yet. Everything below is only what WorkSphare noticed.</p>`;
 
   const dismissedHtml = dismissed.length
     ? `<h2>Marked “Not a change” (${dismissed.length})</h2><p class="r-note">These were looked at and set aside.</p><ul class="r-list">${dismissed.map((f) => `<li>${esc(f.title)}${f.note ? `: ${esc(f.note)}` : ''}</li>`).join('')}</ul>`
     : '';
 
   const empty = !live.length
-    ? '<p>No changes were found. This does not prove that nothing changed. ScopeLens only matches words, so it can miss a request that uses different words.</p>'
+    ? '<p>No changes were found. This does not prove that nothing changed. WorkSphare only matches words, so it can miss a request that uses different words.</p>'
     : '';
 
   const m = comparison.mode;
   return `<article class="sl-report" aria-label="Change report for ${esc(project.name)}">
-<div class="r-brand">${LOGO_SVG}<span>ScopeLens</span></div>
+<div class="r-brand">${LOGO_SVG}<span>WorkSphare</span></div>
 <p class="r-tag">Catch the changes nobody noticed.</p>
 <h1>Project change report</h1>
 <dl class="r-meta">${meta.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
@@ -158,12 +158,12 @@ ${section('Needs clarification', 'These were marked “Ask the client”, or the
 ${dismissedHtml}
 <h2>Message to the client</h2>
 <div class="r-message">${esc(effectiveMessage(project, comparison))}</div>
-<p class="r-foot">Made with ScopeLens on ${esc(fmtDateTime(generatedAt))}. Based on text the user pasted or typed. Dates are the ones the user entered and were not checked with any email or chat app. Saved only in the user's browser.</p>
+<p class="r-foot">Made with WorkSphare on ${esc(fmtDateTime(generatedAt))}. Based on text the user pasted or typed. Dates are the ones the user entered and were not checked with any email or chat app. Saved only in the user's browser.</p>
 </article>`;
 }
 
 export function buildReportDocument(project, comparison) {
-  const title = `ScopeLens report — ${project.name}`;
+  const title = `WorkSphare report — ${project.name}`;
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light"><title>${esc(title)}</title>
@@ -174,7 +174,7 @@ export function buildReportDocument(project, comparison) {
 export function buildReportJSON(project, comparison) {
   const s = summarizeFindings(comparison.findings);
   return {
-    app: 'ScopeLens',
+    app: 'WorkSphare',
     kind: 'change-report',
     generatedAt: new Date().toISOString(),
     disclaimer: DISCLAIMER,
@@ -187,7 +187,7 @@ export function buildReportJSON(project, comparison) {
       id: comparison.id, createdAt: comparison.createdAt, mode: comparison.mode,
       summary: s,
       requests: comparison.requests.map((r) => ({
-        receivedDate: r.date, source: r.source, reference: r.reference, enteredIntoScopeLens: r.enteredAt, text: r.text,
+        receivedDate: r.date, source: r.source, reference: r.reference, enteredIntoWorkSphare: r.enteredAt, text: r.text,
       })),
       findings: comparison.findings.map((f) => ({
         type: f.type, typeLabel: TYPE_LABELS[f.type], title: f.title, original: f.original, updated: f.updated,

@@ -38,19 +38,19 @@ export function render() {
         <div class="form-actions"><button class="btn btn-primary" type="submit">Save settings</button></div>
       </form>
       ${card(`<h2 id="data-storage">Data &amp; storage</h2>
-        <p class="note">${icon('info')}<span><strong>Your data is stored in this browser, on this device.</strong> It does not sync to other devices or browsers, and there is no ScopeLens server. Clearing your browser’s site data, using a different browser or device, or private browsing can make it disappear. Download a backup regularly.</span></p>
+        <p class="note">${icon('info')}<span><strong>Your data is stored in this browser, on this device.</strong> It does not sync to other devices or browsers, and there is no WorkSphare server. Clearing your browser’s site data, using a different browser or device, or private browsing can make it disappear. Download a backup regularly.</span></p>
         ${health.message ? `<p class="banner" role="status">${esc(health.message)}</p>` : ''}
         ${dl([['Where', `Browser storage (<code>${esc(S.DATA_KEY)}</code>)${health.mode === 'memory' ? ' <strong>(not available: held in memory only)</strong>' : ''}`], ['Space used', esc(fmtBytes(used))], ['Saved records', esc(counts.join(' · '))], ['Last saved', esc(fmt.dateTime(db.updatedAt))]])}
-        <p class="small muted">Uploaded agreement files are kept in a separate part of the browser (IndexedDB) and are <strong>not</strong> included in the backup file. Classic projects are stored separately too. Back them up from Classic projects. Please do not store passwords or card details in ScopeLens.</p>
+        <p class="small muted">Uploaded agreement files are kept in a separate part of the browser (IndexedDB) and are <strong>not</strong> included in the backup file. Classic projects are stored separately too. Back them up from Classic projects. Please do not store passwords or card details in WorkSphare.</p>
         <h3>Back up</h3><div class="card-actions"><button type="button" class="btn btn-primary" data-action="data-export">${icon('download')}Download a backup (JSON)</button></div>
         <h3>Restore</h3><p class="muted">Restoring <strong>replaces</strong> everything now in this browser with the contents of the backup. The file is checked first, and nothing changes if it is not valid.</p>
         <div class="field"><label for="import-file">Choose a backup file</label><input id="import-file" class="input" type="file" accept="application/json,.json" data-role="data-import"></div>
         <div id="import-result" aria-live="polite">${importResult}</div>
-        <h3>Demo data</h3><p class="muted">Fill ScopeLens with made-up clients, projects, invoices and more, so you can try everything. Every demo record is labelled “Demo” and can be removed in one click.</p>
+        <h3>Demo data</h3><p class="muted">Fill WorkSphare with made-up clients, projects, invoices and more, so you can try everything. Every demo record is labelled “Demo” and can be removed in one click.</p>
         <div class="card-actions"><button type="button" class="btn" data-action="ws-demo-load"${hasDemo ? ' disabled' : ''}>Load demo data</button><button type="button" class="btn btn-danger-outline" data-action="ws-demo-remove"${hasDemo ? '' : ' disabled'}>Remove demo data…</button></div>
         <h3>Clear everything</h3><p class="muted">Deletes all clients, projects, invoices, agreements, tasks, comparisons and saved files from this browser. Download a backup first.</p>
         <div class="card-actions"><button type="button" class="btn btn-danger-outline" data-action="data-clear">${icon('trash')}Clear all data…</button></div>`)}
-      ${card(`<h2>Help &amp; guide</h2><p class="muted">New here? The guide explains each part of ScopeLens in plain words.</p><a class="btn" href="#/help">Open the guide</a>`)}`,
+      ${card(`<h2>Help &amp; guide</h2><p class="muted">New here? The guide explains each part of WorkSphare in plain words.</p><a class="btn" href="#/help">Open the guide</a>`)}`,
   };
 }
 
@@ -73,9 +73,9 @@ export const changes = {
     el.value = '';
     const show = (html) => { importResult = html; const box = document.getElementById('import-result'); if (box) box.innerHTML = html; };
     if (!file) return;
-    if (file.size > 25 * 1024 * 1024) { show(banner('Could not restore this file. Nothing was changed.', ['The file is larger than 25 MB, which is far more than a ScopeLens backup.'], true)); return; }
+    if (file.size > 25 * 1024 * 1024) { show(banner('Could not restore this file. Nothing was changed.', ['The file is larger than 25 MB, which is far more than a WorkSphare backup.'], true)); return; }
     let parsed;
-    try { parsed = JSON.parse(await file.text()); } catch { show(banner('Could not restore this file. Nothing was changed.', ['This file could not be read. It may be damaged, or it may not be a ScopeLens backup.'], true)); return; }
+    try { parsed = JSON.parse(await file.text()); } catch { show(banner('Could not restore this file. Nothing was changed.', ['This file could not be read. It may be damaged, or it may not be a WorkSphare backup.'], true)); return; }
     const res = B.validateBackup(parsed);
     if (!res.ok) { show(banner('Could not restore this file. Nothing was changed.', res.errors, true)); return; }
     const incoming = B.COLLECTIONS.filter((c) => c !== 'activity').map((c) => `${res.counts[c]} ${B.LABELS[c]}`).join(', ');
@@ -102,7 +102,7 @@ export const changes = {
 export const actions = {
   'data-export': () => {
     const env = S.exportAll();
-    downloadFile(`scopelens-backup-${today()}.json`, JSON.stringify(env, null, 2), 'application/json');
+    downloadFile(`worksphare-backup-${today()}.json`, JSON.stringify(env, null, 2), 'application/json');
     toast('Backup downloaded. Keep it somewhere safe.');
   },
 

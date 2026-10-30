@@ -43,7 +43,7 @@ function injectReportCss() {
 
 function setView(html, { title, nav = 'ai', report = false, keepScroll = false } = {}) {
   view.innerHTML = html;
-  document.title = title ? `${title} · ScopeLens` : 'ScopeLens';
+  document.title = title ? `${title} · WorkSphare` : 'WorkSphare';
   document.body.classList.toggle('report-view', report);
   document.querySelectorAll('.sidebar .nav-link').forEach((a) => {
     if (a.dataset.nav === (nav && !nav.startsWith('#') ? nav : 'ai')) a.setAttribute('aria-current', 'page');
@@ -287,7 +287,7 @@ const actions = {
     if (!p) return;
     const res = await mutate(p, (x) => P.logDataExport(x));
     if (!res.ok) return;
-    downloadFile(`scopelens-${slugify(p.name)}-${todayDate()}.json`, JSON.stringify(P.exportEnvelope([p]), null, 2), 'application/json');
+    downloadFile(`worksphare-${slugify(p.name)}-${todayDate()}.json`, JSON.stringify(P.exportEnvelope([p]), null, 2), 'application/json');
     toast('Project backup downloaded.');
   },
 
@@ -295,7 +295,7 @@ const actions = {
   'scope-edit': async () => {
     const ok = await confirmDialog({
       title: 'Change the original agreement?',
-      message: 'ScopeLens checks every new request against this agreement. If you change it, new comparisons may give different results. Comparisons you already made keep the old text, and the old version is saved as an earlier version.',
+      message: 'WorkSphare checks every new request against this agreement. If you change it, new comparisons may give different results. Comparisons you already made keep the old text, and the old version is saved as an earlier version.',
       confirmLabel: 'Yes, change it',
     });
     if (!ok) return;
@@ -428,14 +428,14 @@ const actions = {
     const p = needProject();
     const c = state.comparison;
     await mutate(p, (x) => P.logExport(x, P.getComparison(x, c.id) || c, 'html'));
-    downloadFile(`scopelens-report-${slugify(p.name)}-${todayDate()}.html`, buildReportDocument(p, c), 'text/html');
+    downloadFile(`worksphare-report-${slugify(p.name)}-${todayDate()}.html`, buildReportDocument(p, c), 'text/html');
     toast('Report downloaded.');
   },
   'report-download-json': async () => {
     const p = needProject();
     const c = state.comparison;
     await mutate(p, (x) => P.logExport(x, P.getComparison(x, c.id) || c, 'json'));
-    downloadFile(`scopelens-report-${slugify(p.name)}-${todayDate()}.json`, JSON.stringify(buildReportJSON(p, c), null, 2), 'application/json');
+    downloadFile(`worksphare-report-${slugify(p.name)}-${todayDate()}.json`, JSON.stringify(buildReportJSON(p, c), null, 2), 'application/json');
     toast('Report data downloaded.');
   },
 
@@ -443,7 +443,7 @@ const actions = {
   'export-all': async () => {
     const all = await storage.getAllProjects();
     if (!all.length) { toast('You have no projects to download yet.'); return; }
-    downloadFile(`scopelens-backup-${todayDate()}.json`, JSON.stringify(P.exportEnvelope(all), null, 2), 'application/json');
+    downloadFile(`worksphare-backup-${todayDate()}.json`, JSON.stringify(P.exportEnvelope(all), null, 2), 'application/json');
     toast(`Downloaded ${plural(all.length, 'project')}.`);
   },
   'persist-request': async () => {
@@ -628,12 +628,12 @@ async function handleImport(input) {
     document.getElementById('import-result').innerHTML = state.importResult;
     input.value = '';
   };
-  if (file.size > 30 * 1024 * 1024) return fail(['That file is much too big to be a ScopeLens backup.']);
+  if (file.size > 30 * 1024 * 1024) return fail(['That file is much too big to be a WorkSphare backup.']);
   let data;
   try {
     data = JSON.parse(await file.text());
   } catch {
-    return fail(['This file could not be read. It may be damaged, or it may not be a ScopeLens backup.']);
+    return fail(['This file could not be read. It may be damaged, or it may not be a WorkSphare backup.']);
   }
   const { projects, errors, warnings } = P.validateImport(data);
   if (errors.length) return fail(errors);
@@ -661,7 +661,7 @@ async function boot() {
   WS.init();
   const mode = await storage.initStorage();
   if (mode === 'memory') {
-    state.storageBanner = 'Your browser is not letting ScopeLens save projects (this can happen in private browsing). They will be lost when you close or refresh this page. Download a backup often from the Backups page.';
+    state.storageBanner = 'Your browser is not letting WorkSphare save projects (this can happen in private browsing). They will be lost when you close or refresh this page. Download a backup often from the Backups page.';
   }
   window.addEventListener('hashchange', route);
   await route();

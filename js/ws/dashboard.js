@@ -22,7 +22,7 @@ export function render() {
   const client = (id) => D.clientName(db, id);
 
   const welcome = S.isEmpty()
-    ? card(`<h2>Welcome to ScopeLens</h2><p class="muted">Nothing is saved yet, so every number below is zero. Start by adding a client, or look around with sample data first. Sample data is clearly labelled and can be removed in one click.</p>
+    ? card(`<h2>Welcome to WorkSphare</h2><p class="muted">Nothing is saved yet, so every number below is zero. Start by adding a client, or look around with sample data first. Sample data is clearly labelled and can be removed in one click.</p>
       <div class="card-actions"><a class="btn btn-primary" href="#/clients/add">${icon('plus')}Add your first client</a><button type="button" class="btn" data-action="ws-demo-load">Load demo data</button><a class="btn" href="#/help">Read the guide</a></div>`, 'card-next')
     : '';
   const demo = hasDemo ? `<div class="banner" role="status"><p><strong>You are looking at demo data.</strong> It is made up, and shown with a “Demo” label. Remove it when you are ready to use your own.</p><button type="button" class="btn btn-sm" data-action="ws-demo-remove">Remove demo data</button></div>` : '';

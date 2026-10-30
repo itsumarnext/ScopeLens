@@ -34,7 +34,7 @@ export function taskList(db, tasks, { links = true } = {}) {
 }
 
 export function activityList(db, entries, { limit = 30, showAll = false } = {}) {
-  if (!entries.length) return '<p class="muted">Nothing recorded yet. Actions you take in ScopeLens appear here.</p>';
+  if (!entries.length) return '<p class="muted">Nothing recorded yet. Actions you take in WorkSphare appear here.</p>';
   const shown = showAll ? entries : entries.slice(0, limit);
   return `<ol class="timeline">${shown.map((a) => {
     const href = activityHref(db, a);

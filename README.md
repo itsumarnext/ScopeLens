@@ -1,21 +1,21 @@
-# ScopeLens
+# WorkSphare
 
 **Catch the changes nobody noticed.**
 
-ScopeLens helps freelancers, independent developers, designers and small agencies compare the **original project agreement** with **later client requests**. It flags potentially new requirements, changed deliverables, removals and unclear wording, so you can talk to the client with a clear record.
+WorkSphare helps freelancers, independent developers, designers and small agencies compare the **original project agreement** with **later client requests**. It flags potentially new requirements, changed deliverables, removals and unclear wording, so you can talk to the client with a clear record.
 
-**Version 3 turns it into one workspace** for your whole client business: clients and leads, projects, invoices and payments, agreements and renewals, tasks and a calendar, and the ScopeLens AI scope-creep check. The original project-comparison tool is still available under *ScopeLens AI → Classic projects* (`#/ai/classic`).
+**Version 3 turns it into one workspace** for your whole client business: clients and leads, projects, invoices and payments, agreements and renewals, tasks and a calendar, and the WorkSphare AI scope-creep check. The original project-comparison tool is still available under *WorkSphare AI → Classic projects* (`#/ai/classic`).
 
 It is a static website: HTML, CSS and plain JavaScript. No server, no account, no paid API, no build step. Your projects are saved **only in your own browser**.
 
-> ScopeLens is an aid for reviewing requirements. It is **not** legal advice and never decides that a client is wrong or that payment is owed.
+> WorkSphare is an aid for reviewing requirements. It is **not** legal advice and never decides that a client is wrong or that payment is owed.
 
 ---
 
 ## 1. What is in this folder
 
 ```
-ScopeLens/
+WorkSphare/
 ├── index.html            App shell, icon sprite, privacy policy (CSP) meta tag
 ├── css/
 │   └── styles.css        The whole neutral white design, responsive + print rules
@@ -29,7 +29,7 @@ ScopeLens/
 │   ├── ui.js             Icons, toasts, accessible dialogs
 │   └── utils.js          Dates, escaping, download, clipboard, small helpers
 ├── assets/
-│   └── logo.svg          ScopeLens logo (original)
+│   └── worksphare-logo.png, worksphare-icon.png, favicon.png, apple-touch-icon.png   WorkSphare logo files
 ├── tests/
 │   ├── engine.test.mjs   Unit tests (Node)
 │   └── e2e.mjs           Browser tests (Playwright) — optional, for developers
@@ -41,11 +41,11 @@ Every file is needed except `tests/` and `package.json`, which you can leave out
 
 ## 2. How to run it
 
-ScopeLens uses JavaScript **modules** (`import … from './x.js'`). Browsers refuse to load modules from `file://` pages (opening `index.html` by double-tapping it), and browser storage can also behave differently or be blocked on `file://`. So it must be served from a web address. Two easy ways:
+WorkSphare uses JavaScript **modules** (`import … from './x.js'`). Browsers refuse to load modules from `file://` pages (opening `index.html` by double-tapping it), and browser storage can also behave differently or be blocked on `file://`. So it must be served from a web address. Two easy ways:
 
 ### On a computer
 ```bash
-cd ScopeLens
+cd WorkSphare
 python3 -m http.server 8000
 ```
 Open <http://localhost:8000>.  (Or `npx serve`.)
@@ -56,22 +56,22 @@ Open <http://localhost:8000>.  (Or `npx serve`.)
 **Option B — Termux (runs on the phone itself).**
 1. Install **Termux** from F-Droid (the Play Store version is outdated).
 2. In Termux: `pkg install python`
-3. Copy the `ScopeLens` folder to the phone (for example into Downloads), then `termux-setup-storage` and `cd ~/storage/downloads/ScopeLens` (adjust the path).
+3. Copy the `WorkSphare` folder to the phone (for example into Downloads), then `termux-setup-storage` and `cd ~/storage/downloads/WorkSphare` (adjust the path).
 4. Run `python -m http.server 8000`, then open `http://localhost:8000` in Chrome.
 
 ### Getting the files onto your phone
-You have a ZIP (`ScopeLens.zip`). Extract it with any file manager (for example the built-in Files app, or *ZArchiver*). The folder structure must stay exactly as listed above.
+You have a ZIP (`WorkSphare.zip`). Extract it with any file manager (for example the built-in Files app, or *ZArchiver*). The folder structure must stay exactly as listed above.
 
-## 3. Using ScopeLens
+## 3. Using WorkSphare
 
 1. **Create project** — only the name is required.
 2. **Original agreement** — paste what you and your client agreed (proposal, contract, email, notes) and save it. Use one requirement per line or sentence for the best results. Editing it later shows a warning, and the old version is kept as an earlier version.
-3. **Client requests** — add each client request with the date received, an optional source (email, chat, meeting…), reference and notes. You paste the text yourself; ScopeLens never reads your messages.
+3. **Client requests** — add each client request with the date received, an optional source (email, chat, meeting…), reference and notes. You paste the text yourself; WorkSphare never reads your messages.
 4. **Compare** — compare the original agreement with the selected requests, *or* with a full updated scope you paste in.
 5. **Review results** — mark each as *Real change*, *Not a change* or *Ask the client*, and add notes. Filter by type and status. A **Word changes** tab shows added and removed words.
 6. **Report** — create a client-ready report. Use **Print or save as PDF** (choose “Save as PDF” in the print dialog), **Download HTML**, or **Export JSON**.
 7. **Client message** — a neutral message built from your real findings. Edit it, then **Copy message**.
-8. **History** — a timeline of everything, showing the date *you* recorded for each request separately from when it was *added to ScopeLens*.
+8. **History** — a timeline of everything, showing the date *you* recorded for each request separately from when it was *added to WorkSphare*.
 
 **Backups** (sidebar) downloads all projects as a JSON file and restores them again. Imports are validated and never overwrite existing projects (duplicates are added as “restored copy”). A clearly-labelled **sample project** can be loaded and removed there.
 
@@ -89,7 +89,7 @@ Everything runs in your browser using fixed, visible rules. There is **no AI mod
 - A sentence containing several requirements is treated as one.
 - “Match confidence” only describes keyword overlap, not legal or semantic certainty.
 - A request can already be covered by the agreement or a revision allowance. **You** make the final decision; use notes to record it.
-- Dates are entered by you. ScopeLens cannot verify when a message was actually sent.
+- Dates are entered by you. WorkSphare cannot verify when a message was actually sent.
 - Inputs are limited to about 60,000 characters per text.
 
 ## 5. Deploying for free (static hosting)
@@ -104,7 +104,7 @@ The whole app is static files, so any free static host works. Do **not** include
 4. After a minute your site is at `https://YOUR-USERNAME.github.io/scopelens/`.
 
 ### Netlify Drop or Cloudflare Pages (direct upload)
-Both offer a free drag-and-drop style upload of a site folder; at the time of writing they also accept a ZIP of the folder, but the sign-up and upload screens change, so check the host's current instructions. Upload the `ScopeLens` folder (with `index.html` at its top level) and you receive a public address.
+Both offer a free drag-and-drop style upload of a site folder; at the time of writing they also accept a ZIP of the folder, but the sign-up and upload screens change, so check the host's current instructions. Upload the `WorkSphare` folder (with `index.html` at its top level) and you receive a public address.
 
 > Important: browser storage belongs to each web address. Projects saved at `localhost` will **not** appear at your deployed address (or the reverse). Use **Backups** to move them.
 
@@ -114,7 +114,7 @@ Both offer a free drag-and-drop style upload of a site folder; at the time of wr
 
 **Demo data:** none by default. A new install is empty. Sample records appear only after you press "Load demo data". They carry a "Demo" label and "Remove demo data" deletes only them.
 
-**AI: not integrated.** There is no live AI model (no ChatGPT, Claude or other API) anywhere in the app. "ScopeLens AI" is a local word-matching rule engine (`local-rules-v1`) that runs in your browser. It sorts each client request into covered, possibly outside, outside, or unclear, and drafts a reply from templates. It can miss synonyms, misread context, and is not legal advice. The app says this on every result. It never changes an agreement, price or invoice by itself.
+**AI: not integrated.** There is no live AI model (no ChatGPT, Claude or other API) anywhere in the app. "WorkSphare AI" is a local word-matching rule engine (`local-rules-v1`) that runs in your browser. It sorts each client request into covered, possibly outside, outside, or unclear, and drafts a reply from templates. It can miss synonyms, misread context, and is not legal advice. The app says this on every result. It never changes an agreement, price or invoice by itself.
 
 **Accounts and the Admin dashboard:** login, sign-up, password reset, email confirmation and the owner-only Admin dashboard are real and use Supabase Auth. They need the one-time setup below.
 
@@ -132,7 +132,7 @@ Both offer a free drag-and-drop style upload of a site folder; at the time of wr
 
 ## Accounts and the Admin dashboard
 
-**What goes online:** your email address and sign-up time (held by Supabase Auth), your password (held by Supabase Auth as a hash, never visible to ScopeLens), and one row per successful login (your user id and the time) in the `login_events` table. **Nothing else.** Clients, projects, invoices, payments, agreements, tasks, files and comparisons never leave the browser. This is also disclosed on the sign-up and login pages.
+**What goes online:** your email address and sign-up time (held by Supabase Auth), your password (held by Supabase Auth as a hash, never visible to WorkSphare), and one row per successful login (your user id and the time) in the `login_events` table. **Nothing else.** Clients, projects, invoices, payments, agreements, tasks, files and comparisons never leave the browser. This is also disclosed on the sign-up and login pages.
 
 **Pages:** `#/login`, `#/signup`, `#/forgot`, `#/reset-password` (opened from the emailed link), and `#/admin`. Everything else needs login; logged-out visitors are redirected to the login page. Sessions persist across refreshes and restarts until you log out. A refresh never counts as a login; only a successful login (or confirming/reset link) does.
 
@@ -143,9 +143,9 @@ Both offer a free drag-and-drop style upload of a site folder; at the time of wr
 ### One-time setup (about 10 minutes)
 
 1. **Run the SQL.** Supabase dashboard → SQL Editor → New query → paste `supabase/migrations/001_auth_analytics.sql` → Run. It is safe to run again.
-2. **Allow the site address.** Authentication → URL Configuration: set *Site URL* to where ScopeLens is hosted (for example `https://yourname.github.io/ScopeLens/`) and add the same address to *Redirect URLs*. Confirmation and reset emails link back here. For local testing also add `http://localhost:8765/index.html`.
+2. **Allow the site address.** Authentication → URL Configuration: set *Site URL* to where WorkSphare is hosted (for example `https://yourname.github.io/WorkSphare/`) and add the same address to *Redirect URLs*. Confirmation and reset emails link back here. For local testing also add `http://localhost:8765/index.html`.
 3. **Keep "Confirm email" turned ON** (Authentication → Sign In / Providers → Email). This is required: it stops anyone from claiming the admin address without owning the inbox, and the database also refuses admin access to unconfirmed accounts.
-4. **Create the administrator account first:** open ScopeLens → Create an account with `itsumarnext@gmail.com`, then click the link in the confirmation email. After login an **Admin** item appears in the sidebar.
+4. **Create the administrator account first:** open WorkSphare → Create an account with `itsumarnext@gmail.com`, then click the link in the confirmation email. After login an **Admin** item appears in the sidebar.
 5. Optional: Authentication → Email: set a stronger minimum password length and, for real traffic, configure custom SMTP (Supabase's built-in email sender is heavily rate-limited).
 
 Never put a *service role* or *secret* key anywhere in this project. The publishable key in `js/auth/config.js` is meant to be public.
@@ -163,7 +163,7 @@ Where things are kept (all in your browser; the only online data is the login de
 | IndexedDB | `scopelens_files_v1` | Uploaded agreement files (max 5 MB each). Not included in JSON backups. |
 | IndexedDB / `localStorage` | `projects` store, `scopelens:` keys | The classic projects tool. Untouched by the workspace and has its own backup under *Classic projects*. |
 
-- If saved data cannot be read, ScopeLens keeps a copy under `scopelens_data_v1_unreadable_<time>` and starts empty instead of overwriting it.
+- If saved data cannot be read, WorkSphare keeps a copy under `scopelens_data_v1_unreadable_<time>` and starts empty instead of overwriting it.
 - If the browser is full, the change is rolled back and you are told; nothing is half-saved.
 - Settings → Data & Storage: export a JSON backup, import one (checked first; replaces current data after you confirm), or delete everything (type DELETE).
 - **Clearing browser data, private browsing or losing the device can delete your data.** Export backups regularly and keep them private.

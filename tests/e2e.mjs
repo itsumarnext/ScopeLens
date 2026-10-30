@@ -85,7 +85,7 @@ await addReq('Can you make the site look more modern and improve the speed?', '2
 check('Requests: 4 added', await page.locator('.request').count() === 4);
 const firstDate = await text('.request:first-child .request-top strong');
 check('Requests: chronological by date received', firstDate.includes('5 Sept') || firstDate.includes('Sep 5') || /5.*Sep|Sep.*5/.test(firstDate), firstDate);
-check('Requests: shows added-to-ScopeLens timestamp', (await text('.request .stamp')).includes('Added to ScopeLens'));
+check('Requests: shows added-to-WorkSphare timestamp', (await text('.request .stamp')).includes('Added to WorkSphare'));
 
 // edit request
 await page.click('.request:first-child button[data-action="request-edit"]');
@@ -174,7 +174,7 @@ check('Message: copy to clipboard works with edited text', clip.includes('PS: th
 await page.click('a:has-text("Create report")');
 await page.waitForSelector('.sl-report');
 const rep = await text('.sl-report');
-{ const need = ['Bakery site', 'ScopeLens', 'not legal advice', 'Real change', 'quote extra', 'PS: thanks!', 'What you confirmed']; const miss = need.filter((s) => !rep.includes(s)); check('Report: has project, branding, disclaimer, decisions, message', !miss.length, 'missing: ' + miss.join(' | ')); }
+{ const need = ['Bakery site', 'WorkSphare', 'not legal advice', 'Real change', 'quote extra', 'PS: thanks!', 'What you confirmed']; const miss = need.filter((s) => !rep.includes(s)); check('Report: has project, branding, disclaimer, decisions, message', !miss.length, 'missing: ' + miss.join(' | ')); }
 check('Report: no horizontal scroll', await noHScroll());
 const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button[data-action="report-download-html"]')]);
 const htmlPath = path.join(tmp, 'report.html'); await dl.saveAs(htmlPath);
@@ -196,7 +196,7 @@ fs.copyFileSync(pdfPath, path.join(tmp, '..', 'scopelens-sample-report.pdf'));
 await page.goto(BASE + projectHash + '/history'); await page.waitForSelector('.timeline');
 const hist = await text('.timeline');
 { const need = ['Original agreement saved', 'Client request added', 'Comparison done', 'Result reviewed', 'Report shared or saved']; const miss = need.filter((s) => !hist.includes(s)); check('History: records baseline, requests, comparison, reviews, notes, export', !miss.length, 'missing: ' + miss.join(' | ')); }
-check('History: distinguishes request date vs entered date', (await page.locator('.timeline').innerText()).includes('Added to ScopeLens'));
+check('History: distinguishes request date vs entered date', (await page.locator('.timeline').innerText()).includes('Added to WorkSphare'));
 
 // baseline edit warning + revision
 await page.goto(BASE + projectHash + '/scope'); await page.waitForSelector('.scope-text');
@@ -237,7 +237,7 @@ await page.goto(BASE + '#/data'); await page.waitForSelector('#import-file');
 const [de] = await Promise.all([page.waitForEvent('download'), page.click('button[data-action="export-all"]')]);
 const bPath = path.join(tmp, 'backup.json'); await de.saveAs(bPath);
 const backup = JSON.parse(fs.readFileSync(bPath, 'utf8'));
-check('Export: backup JSON has project', backup.app === 'ScopeLens' && backup.projects.length === 1 && backup.projects[0].requests.length === 4);
+check('Export: backup JSON has project', backup.app === 'WorkSphare' && backup.projects.length === 1 && backup.projects[0].requests.length === 4);
 await page.setInputFiles('#import-file', bPath);
 await page.waitForSelector('#import-result .banner');
 check('Import: valid backup imported as copy', (await text('#import-result')).includes('Restored 1 project'));
@@ -248,10 +248,10 @@ const bad = (name, content) => { const p = path.join(tmp, name); fs.writeFileSyn
 await page.goto(BASE + '#/data'); await page.waitForSelector('#import-file');
 for (const [name, content, expect] of [
   ['bad1.json', '{not json', 'could not be read'],
-  ['bad2.json', '[1,2,3]', 'not a ScopeLens backup'],
+  ['bad2.json', '[1,2,3]', 'not a WorkSphare backup'],
   ['bad3.json', JSON.stringify({ app: 'Other', schema: 1, projects: [] }), 'does not look like'],
-  ['bad4.json', JSON.stringify({ app: 'ScopeLens', schema: 1, projects: [{ name: '' }, 5] }), 'No usable projects'],
-  ['bad5.json', JSON.stringify({ app: 'ScopeLens', schema: 99, projects: [] }), 'newer version'],
+  ['bad4.json', JSON.stringify({ app: 'WorkSphare', schema: 1, projects: [{ name: '' }, 5] }), 'No usable projects'],
+  ['bad5.json', JSON.stringify({ app: 'WorkSphare', schema: 99, projects: [] }), 'newer version'],
 ]) {
   await page.setInputFiles('#import-file', bad(name, content));
   await page.waitForFunction((e) => document.querySelector('#import-result')?.innerText.includes(e), expect);
@@ -342,7 +342,7 @@ await page.goto(BASE + '#/help'); check('360px: no horizontal scroll', await noH
   const p2 = await ctx2.newPage();
   const errs2 = []; p2.on('pageerror', (e) => errs2.push(e.message));
   await p2.goto(BASE + '#/ai/classic'); await p2.waitForSelector('.banner[role="alert"]');
-  check('Storage failure: warning banner shown', (await p2.innerText('.banner[role="alert"]')).includes('not letting ScopeLens save'));
+  check('Storage failure: warning banner shown', (await p2.innerText('.banner[role="alert"]')).includes('not letting WorkSphare save'));
   await p2.goto(BASE + '#/new'); await p2.fill('#pf-name', 'Memory only'); await p2.click('form button[type=submit]');
   await p2.waitForSelector('form[data-form="scope"]');
   check('Storage failure: app still works in memory mode', true);

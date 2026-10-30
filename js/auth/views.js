@@ -1,13 +1,13 @@
-// views.js — authentication pages (HTML strings). Styling reuses the ScopeLens design.
+// views.js — authentication pages (HTML strings). Styling reuses the WorkSphare design.
 import { esc } from '../utils.js';
 import { field, formError } from '../ws/ui.js';
 import { MIN_PASSWORD } from './config.js';
 
-export const ANALYTICS_NOTE = `<p class="small muted"><strong>What ScopeLens collects:</strong> your email address, when you created your account, and the time of each successful login, so the owner can see how many people use the app. That is all. Your clients, projects, invoices, payments, agreements, tasks and every other piece of business data stay in this browser and are never uploaded. Passwords are handled by Supabase Auth; ScopeLens cannot see them.</p>`;
+export const ANALYTICS_NOTE = `<p class="small muted"><strong>What WorkSphare collects:</strong> your email address, when you created your account, and the time of each successful login, so the owner can see how many people use the app. That is all. Your clients, projects, invoices, payments, agreements, tasks and every other piece of business data stay in this browser and are never uploaded. Passwords are handled by Supabase Auth; WorkSphare cannot see them.</p>`;
 
 const shell = (title, sub, body) => `<div class="auth-wrap">
   <div class="auth-card card">
-    <a class="brand auth-brand" href="#/login"><img src="assets/logo.svg" alt="" width="32" height="32"><span>ScopeLens</span></a>
+    <a class="brand auth-brand" href="#/login" aria-label="WorkSphare"><img class="brand-logo" src="assets/worksphare-logo.png" alt="WorkSphare" width="190" height="45"></a>
     <h1>${esc(title)}</h1>
     ${sub ? `<p class="sub">${esc(sub)}</p>` : ''}
     <div data-auth-flash role="status"></div>
@@ -53,7 +53,7 @@ export function checkEmail(addr, kind) {
   const reset = kind === 'reset';
   return shell('Check your email', '', `<div class="stack">
     <p>${reset ? 'If an account exists for' : 'We sent a confirmation link to'} <strong>${esc(addr)}</strong>${reset ? ', we have sent a link to reset the password.' : '. Open it to finish creating your account.'}</p>
-    <p class="muted small">It can take a few minutes. Check your spam folder too. The link opens ScopeLens in this browser.</p>
+    <p class="muted small">It can take a few minutes. Check your spam folder too. The link opens WorkSphare in this browser.</p>
     ${reset ? '' : `<button type="button" class="btn" data-auth-action="resend" data-email="${esc(addr)}">Send the email again</button>`}
     <a class="btn btn-primary" href="#/login">Go to log in</a></div>`);
 }

@@ -213,9 +213,9 @@ test('backup: round trip keeps everything; hostile text stays plain text', () =>
 test('backup: rejects wrong files and repairs broken records without crashing', () => {
   assert.equal(B.validateBackup('hello').ok, false);
   assert.equal(B.validateBackup({ app: 'Other' }).ok, false);
-  assert.equal(B.validateBackup({ app: 'ScopeLens', kind: 'workspace-backup', schema: 99, data: {} }).ok, false);
-  assert.equal(B.validateBackup({ app: 'ScopeLens', schema: 1, projects: [] }).ok, false);
-  const broken = { app: 'ScopeLens', kind: 'workspace-backup', schema: 1, data: {
+  assert.equal(B.validateBackup({ app: 'WorkSphare', kind: 'workspace-backup', schema: 99, data: {} }).ok, false);
+  assert.equal(B.validateBackup({ app: 'WorkSphare', schema: 1, projects: [] }).ok, false);
+  const broken = { app: 'WorkSphare', kind: 'workspace-backup', schema: 1, data: {
     clients: [{ id: 'c1', name: 'Good' }, { id: 'c1', name: 'Repeat' }, { name: 'No id' }, { id: 'c2', name: '' }, 5],
     projects: [{ id: 'p1', name: 'Orphan', clientId: 'missing' }, { id: 'p2', name: 'Fine', clientId: 'c1', status: 'weird', progress: 900, value: 'abc', startDate: '2026-02-31' }],
     invoices: [{ id: 'i1', number: 'A', clientId: 'c1', amount: -5, issueDate: '2026-01-01', dueDate: '2026-01-02' }],

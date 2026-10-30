@@ -61,7 +61,7 @@ export function usersTable(res) {
 
 export function dashboard(o, users) {
   const logins = (o.totalLogins || 0);
-  return `${pageHead({ title: 'Admin dashboard', sub: 'Account statistics for ScopeLens. Only you can see this page. It contains no client, project, invoice or agreement data.', actions: '<button type="button" class="btn" data-admin-action="refresh">Refresh</button>' })}
+  return `${pageHead({ title: 'Admin dashboard', sub: 'Account statistics for WorkSphare. Only you can see this page. It contains no client, project, invoice or agreement data.', actions: '<button type="button" class="btn" data-admin-action="refresh">Refresh</button>' })}
   <section aria-labelledby="ad-sum"><h2 id="ad-sum" class="h-gap">Overview</h2>
     <div class="summary summary-6">
       ${tile(n(o.totalUsers), 'Total registered users', 'All accounts')}

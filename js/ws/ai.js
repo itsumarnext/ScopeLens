@@ -1,4 +1,4 @@
-// ws/ai.js — ScopeLens AI tab: Compare a request, Comparison history, Scope change tracker, Classic projects.
+// ws/ai.js — WorkSphare AI tab: Compare a request, Comparison history, Scope change tracker, Classic projects.
 //
 // The check runs locally with word-matching rules (see ../ai.js). It is not a live AI model, and every screen says so.
 
@@ -20,7 +20,7 @@ const TABS = [
   { key: 'changes', label: 'Scope change tracker', href: '#/ai/changes' },
   { key: 'classic', label: 'Classic projects', href: '#/ai/classic' },
 ];
-export const aiTabs = (active) => `<div class="page-head"><div class="page-head-row"><div class="page-head-text"><h1>ScopeLens AI</h1><p class="sub">Check a client request against what you agreed. Rule-based and local. Not a live AI model.</p></div></div></div>${tabsNav(TABS, active, 'ScopeLens AI sections')}`;
+export const aiTabs = (active) => `<div class="page-head"><div class="page-head-row"><div class="page-head-text"><h1>WorkSphare AI</h1><p class="sub">Check a client request against what you agreed. Rule-based and local. Not a live AI model.</p></div></div></div>${tabsNav(TABS, active, 'WorkSphare AI sections')}`;
 const head = (active, extra = '') => `${aiTabs(active)}${extra}`;
 const engineNote = `<p class="note">${icon('info')}<span>${esc(Engine.ENGINE_NOTE)}</span></p>`;
 
@@ -111,7 +111,7 @@ function viewResult(id) {
       ${r.notes.length ? card(`<h2>Other points to check</h2><ul class="plain-bullets">${r.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>`) : ''}
       ${card(`<h2>Suggested next steps</h2><ol class="plain-bullets">${r.nextSteps.map((n) => `<li>${esc(n)}</li>`).join('')}</ol>
         <div class="card-actions"><button type="button" class="btn btn-sm" data-action="ai-to-change" data-id="${esc(id)}">${icon('plus')}Add to scope change tracker</button></div>`)}
-      ${card(`<h2>Draft reply to the client</h2><p class="muted">A starting point. Edit it, then copy it and send it yourself. ScopeLens does not send anything.</p>
+      ${card(`<h2>Draft reply to the client</h2><p class="muted">A starting point. Edit it, then copy it and send it yourself. WorkSphare does not send anything.</p>
         <div class="field"><label for="ai-response">Reply${c.responseEdited ? ' (edited by you)' : ''}</label><textarea id="ai-response" class="input" rows="14" data-role="ai-response" data-id="${esc(id)}">${esc(c.response)}</textarea></div>
         <div class="card-actions"><button type="button" class="btn btn-primary" data-action="ai-copy" data-id="${esc(id)}">${icon('copy')}Copy reply</button><button type="button" class="btn" data-action="ai-reset-response" data-id="${esc(id)}">${icon('rotate')}Start again from the generated draft</button></div>`)}`,
   };
@@ -181,7 +181,7 @@ function viewChanges() {
   return {
     title: 'Scope change tracker', nav: 'ai',
     html: `${head('changes', `<div class="head-actions"><button type="button" class="btn btn-primary" data-action="chg-new">${icon('plus')}Record a change</button></div>`)}
-      <p class="note">${icon('info')}<span>This list only records changes. ScopeLens never edits an agreement or a project price for you. Do that yourself once you and the client agree.</span></p>
+      <p class="note">${icon('info')}<span>This list only records changes. WorkSphare never edits an agreement or a project price for you. Do that yourself once you and the client agree.</span></p>
       ${db.scopeChanges.length ? filterBar('changes', st, { placeholder: 'Search changes', selects: [{ key: 'status', label: 'Status', options: [{ value: 'open', label: 'Still open' }, { value: 'all', label: 'Everything' }, ...D.CHANGE_STATUSES.map((s) => ({ value: s, label: s }))] }, { key: 'client', label: 'Client', options: [{ value: 'all', label: 'All clients' }, ...clientOptions(db)] }] }) : ''}
       <div id="list-changes" aria-live="polite">${changesHtml()}</div>`,
   };

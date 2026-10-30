@@ -1,7 +1,7 @@
 // ai.js — checks a client request against an agreement.
 //
 // IMPORTANT: this is NOT a live AI model. It runs entirely in the browser using the same word-matching
-// rules as the original ScopeLens comparison (comparison.js). It cannot read meaning the way a person
+// rules as the original WorkSphare comparison (comparison.js). It cannot read meaning the way a person
 // can, so every result is a prompt for the freelancer's own judgement. It is not legal advice.
 
 import { compareScope, contentTokens, LIMITS } from './comparison.js';

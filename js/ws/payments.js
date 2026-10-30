@@ -71,7 +71,7 @@ function invoiceListHtml() {
     amount: (a, b) => b.i.amount - a.i.amount,
     client: (a, b) => D.compareText(D.clientName(db, a.i.clientId), D.clientName(db, b.i.clientId)),
   }[st.sort] || (() => 0));
-  if (!db.invoices.length) return empty({ title: 'No invoices yet', text: 'Create an invoice to track what a client owes. ScopeLens does not send invoices. You print or share them yourself.', action: '<button type="button" class="btn btn-primary" data-action="inv-new">Create an invoice</button>' });
+  if (!db.invoices.length) return empty({ title: 'No invoices yet', text: 'Create an invoice to track what a client owes. WorkSphare does not send invoices. You print or share them yourself.', action: '<button type="button" class="btn btn-primary" data-action="inv-new">Create an invoice</button>' });
   return table({
     list: 'invoices', rows, caption: 'Invoices', empty: empty({ title: 'No invoices match', text: 'Try a different search or filter.' }),
     cols: [
@@ -100,7 +100,7 @@ function viewInvoices() {
   const st = listState('invoices', INV_DEFAULTS);
   return {
     title: 'Invoices & payment requests', nav: 'payments',
-    html: `${head('invoices', 'Invoices & payment requests', 'Create invoice-style documents and track what is still owed. ScopeLens does not send them. Print or save as PDF, then send it yourself.', `<button type="button" class="btn btn-primary" data-action="inv-new">${icon('plus')}New invoice</button>`)}
+    html: `${head('invoices', 'Invoices & payment requests', 'Create invoice-style documents and track what is still owed. WorkSphare does not send them. Print or save as PDF, then send it yourself.', `<button type="button" class="btn btn-primary" data-action="inv-new">${icon('plus')}New invoice</button>`)}
       ${db.invoices.length ? filterBar('invoices', st, { placeholder: 'Search number, client or description', selects: [{ key: 'status', label: 'Status', options: [{ value: 'all', label: 'All statuses' }, ...D.INVOICE_STATUSES.map((s) => ({ value: s, label: s }))] }, { key: 'client', label: 'Client', options: [{ value: 'all', label: 'All clients' }, ...clientOptions(db)] }, { key: 'sort', label: 'Sort by', options: Object.entries(INV_SORTS).map(([value, label]) => ({ value, label })) }] }) : ''}
       <div id="list-invoices" aria-live="polite">${invoiceListHtml()}</div>`,
   };
@@ -180,7 +180,7 @@ function viewDues() {
   return {
     title: 'Dues & overdue', nav: 'payments',
     html: `${head('dues', 'Dues & overdue', 'Unpaid and part-paid invoices. Overdue is worked out from the due date and today’s date.')}
-      <p class="note">${icon('info')}<span>Reminders are drafts for you to copy and send yourself. ScopeLens does not send emails or messages.</span></p>
+      <p class="note">${icon('info')}<span>Reminders are drafts for you to copy and send yourself. WorkSphare does not send emails or messages.</span></p>
       ${filterBar('dues', st, { placeholder: 'Search invoice or client', selects: [{ key: 'status', label: 'Status', options: [{ value: 'all', label: 'All unpaid' }, { value: 'overdue', label: 'Overdue' }, { value: 'soon', label: 'Due in the next 7 days' }, { value: 'later', label: 'Not due yet' }] }, { key: 'client', label: 'Client', options: [{ value: 'all', label: 'All clients' }, ...clientOptions(db)] }], extra: dates })}
       <div id="list-dues" aria-live="polite">${duesListHtml()}</div>`,
   };
@@ -227,7 +227,7 @@ function viewInvoice(id) {
         ${v.isOpen ? `<button type="button" class="btn" data-action="txn-new" data-invoice="${esc(id)}">Record payment</button><button type="button" class="btn" data-action="inv-reminder" data-id="${esc(id)}">Payment reminder</button>` : ''}
         <button type="button" class="btn" data-action="inv-edit" data-id="${esc(id)}">${icon('edit')}Edit</button>
       </div>
-      <p class="note no-print">${icon('info')}<span>ScopeLens does not send invoices. Print or save as PDF (choose “Save as PDF” in the print window), then send it yourself.${hasProfile ? '' : ' Add your business details in <a href="#/settings">Settings</a> so they appear at the top.'}</span></p>
+      <p class="note no-print">${icon('info')}<span>WorkSphare does not send invoices. Print or save as PDF (choose “Save as PDF” in the print window), then send it yourself.${hasProfile ? '' : ' Add your business details in <a href="#/settings">Settings</a> so they appear at the top.'}</span></p>
       <div class="report-frame"><article class="invoice" aria-label="Invoice ${esc(inv.number)}">
         <header class="inv-head"><div><h2>${esc(s.businessName || 'Your business')}</h2><p class="small">${esc(s.email)}${s.email && s.phone ? ' · ' : ''}${esc(s.phone)}</p></div>
           <div class="inv-title"><p class="inv-word">${inv.status === 'Draft' ? 'DRAFT INVOICE' : inv.status === 'Cancelled' ? 'CANCELLED INVOICE' : 'INVOICE'}</p><p><strong>${esc(inv.number)}</strong></p><p class="no-print">${invoiceStatusBadge(v)}</p></div></header>
@@ -238,7 +238,7 @@ function viewInvoice(id) {
           <tfoot><tr><th scope="row">Invoice total</th><td class="num">${esc(fmt.money(inv.amount))}</td></tr>${v.paid > 0 ? `<tr><th scope="row">Received so far</th><td class="num">− ${esc(fmt.money(v.paid))}</td></tr>` : ''}<tr class="inv-due"><th scope="row">${inv.status === 'Draft' ? 'Amount to pay' : 'Balance due'}</th><td class="num">${esc(fmt.money(inv.status === 'Draft' ? inv.amount : v.balance))}</td></tr></tfoot></table>
         ${txns.length ? `<h3>Payments received</h3><table class="inv-table"><tbody>${txns.map((t) => `<tr><td>${esc(fmt.date(t.date))}${t.method ? ` · ${esc(t.method)}` : ''}${t.reference ? ` · ${esc(t.reference)}` : ''}</td><td class="num">${esc(fmt.money(t.amount))}</td></tr>`).join('')}</tbody></table>` : ''}
         ${inv.notes ? `<h3>Notes</h3><p class="pre">${esc(inv.notes)}</p>` : ''}
-        <p class="small muted inv-foot">Prepared with ScopeLens.</p></article></div>`,
+        <p class="small muted inv-foot">Prepared with WorkSphare.</p></article></div>`,
   };
 }
 
@@ -286,7 +286,7 @@ async function openTxnDialog(t, preset = {}) {
   const v = t || { invoiceId: preset.invoice || '', clientId: preset.client || '', date: today(), amount: preset.invoice ? D.invoiceView(db, D.byId(db.invoices, preset.invoice) || { id: '', amount: 0 }, today()).balance : '' };
   const done = await formDialog({
     title: editing ? 'Edit payment' : 'Record a payment', submitLabel: editing ? 'Save changes' : 'Record payment', bodyHtml: txFields(db, v), wide: true,
-    intro: 'Record money you have actually received. ScopeLens never marks an invoice as paid on its own.',
+    intro: 'Record money you have actually received. WorkSphare never marks an invoice as paid on its own.',
     onSubmit: async (raw) => {
       const r = D.validateTransaction(raw, S.data(), { ignoreId: t ? t.id : null });
       if (!r.ok) return { errors: r.errors };
@@ -361,7 +361,7 @@ export const actions = {
     const body = D.buildReminder({ business: db.settings.businessName, client: D.byId(db.clients, i.clientId), invoice: i, view: v, fmtMoney: fmt.money, fmtDate: fmt.date });
     await infoDialog({
       title: `Payment reminder for ${i.number}`, wide: true, closeLabel: 'Done',
-      bodyHtml: `<p class="note">${icon('info')}<span>This is a draft. ScopeLens has not sent anything. Copy it and send it yourself.</span></p><div class="field"><label for="rem-text">Message (you can edit it)</label><textarea id="rem-text" class="input" rows="12">${esc(body)}</textarea></div><button type="button" class="btn" data-action="copy-text" data-target="rem-text">${icon('copy')}Copy message</button>`,
+      bodyHtml: `<p class="note">${icon('info')}<span>This is a draft. WorkSphare has not sent anything. Copy it and send it yourself.</span></p><div class="field"><label for="rem-text">Message (you can edit it)</label><textarea id="rem-text" class="input" rows="12">${esc(body)}</textarea></div><button type="button" class="btn" data-action="copy-text" data-target="rem-text">${icon('copy')}Copy message</button>`,
     });
   },
 
