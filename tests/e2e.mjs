@@ -14,13 +14,14 @@ const check = (name, ok, extra = '') => { results.push({ name, ok: !!ok }); cons
 
 const browser = await pw.chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, acceptDownloads: true, permissions: ['clipboard-read', 'clipboard-write'] });
+await (await import('./auth-helper.mjs')).signedIn(ctx);
 const page = await ctx.newPage();
 const errors = [];
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
 page.on('requestfailed', (r) => errors.push('requestfailed: ' + r.url()));
 const external = [];
-page.on('request', (r) => { if (!r.url().startsWith(BASE) && !r.url().startsWith('data:') && !r.url().startsWith('blob:')) external.push(r.url()); });
+page.on('request', (r) => { if (!r.url().startsWith(BASE) && !r.url().startsWith('https://yrkvlunvpjmuprlftauy.supabase.co') && !r.url().startsWith('data:') && !r.url().startsWith('blob:')) external.push(r.url()); });
 
 const text = async (sel) => (await page.locator(sel).first().innerText());
 const hash = () => page.evaluate(() => location.hash);
@@ -337,6 +338,7 @@ await page.goto(BASE + '#/help'); check('360px: no horizontal scroll', await noH
 {
   const ctx2 = await browser.newContext({ viewport: { width: 390, height: 800 } });
   await ctx2.addInitScript(() => { Object.defineProperty(window, 'indexedDB', { get() { return undefined; } }); });
+  await (await import('./auth-helper.mjs')).signedIn(ctx2);
   const p2 = await ctx2.newPage();
   const errs2 = []; p2.on('pageerror', (e) => errs2.push(e.message));
   await p2.goto(BASE + '#/ai/classic'); await p2.waitForSelector('.banner[role="alert"]');

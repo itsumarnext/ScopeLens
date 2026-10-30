@@ -10,6 +10,7 @@ import {
 } from './ui.js';
 import * as V from './views.js';
 import * as WS from './ws/index.js';
+import * as Auth from './auth/index.js';
 import { aiTabs } from './ws/ai.js';
 import {
   buildReportBody, buildReportDocument, buildReportJSON, effectiveMessage, REPORT_CSS,
@@ -102,6 +103,14 @@ const go = (hash) => { location.hash = hash; };
 async function route() {
   closeNav();
   const parts = (location.hash || '#/').replace(/^#\/?/, '').split('/').filter(Boolean);
+  const gate = await Auth.guard(parts);
+  if (gate && gate.redirect) { if (location.hash !== gate.redirect) location.replace(gate.redirect); return; }
+  document.body.classList.toggle('auth-view', !!(gate && gate.auth));
+  if (gate && gate.html) {
+    setView(gate.html, { title: gate.title, nav: gate.nav || '' });
+    Auth.afterRender(parts);
+    return;
+  }
   try {
     await render(parts);
   } catch (e) {
@@ -647,6 +656,8 @@ async function handleImport(input) {
 /* ---------------------------------- boot ---------------------------------- */
 
 async function boot() {
+  Auth.bind();
+  await Auth.init(route);
   WS.init();
   const mode = await storage.initStorage();
   if (mode === 'memory') {

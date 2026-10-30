@@ -108,9 +108,53 @@ Both offer a free drag-and-drop style upload of a site folder; at the time of wr
 
 > Important: browser storage belongs to each web address. Projects saved at `localhost` will **not** appear at your deployed address (or the reverse). Use **Backups** to move them.
 
+## Feature status: what is real, what is demo, what is not included
+
+**Real and working (saved in your browser, no fake data):** clients, leads and follow-ups, projects and the status board, invoices, part payments and overdue tracking, agreements and renewal warnings, agreement file upload (stored in your browser), tasks, calendar, activity log, dashboard figures (all calculated from your records), scope-change tracker, comparison history, settings, JSON export/import/delete-all, printable invoices, and the original Classic projects tool.
+
+**Demo data:** none by default. A new install is empty. Sample records appear only after you press "Load demo data". They carry a "Demo" label and "Remove demo data" deletes only them.
+
+**AI: not integrated.** There is no live AI model (no ChatGPT, Claude or other API) anywhere in the app. "ScopeLens AI" is a local word-matching rule engine (`local-rules-v1`) that runs in your browser. It sorts each client request into covered, possibly outside, outside, or unclear, and drafts a reply from templates. It can miss synonyms, misread context, and is not legal advice. The app says this on every result. It never changes an agreement, price or invoice by itself.
+
+**Accounts and the Admin dashboard:** login, sign-up, password reset, email confirmation and the owner-only Admin dashboard are real and use Supabase Auth. They need the one-time setup below.
+
+**Not included (and nothing pretends to be):**
+- Sending email, WhatsApp or SMS. Reminders and invoices are text you copy or pages you print or save as PDF. Nothing is ever "sent".
+- Real payment processing. Payments are records you enter by hand. No payment gateway, bank link or payment links.
+- Teams, roles other than the single administrator, or cloud sync of business data between devices. Business data lives in one browser on one device. Two accounts on the same browser share that browser's local data.
+- Reading the text of uploaded PDF/Word files or previewing them. They can be stored and downloaded only. Paste text into the agreement form to use it in comparisons.
+- Multiple currencies, dark theme, time zone settings, and automatic backups. Export backups yourself.
+- Uploaded agreement files are not part of the JSON backup.
+
+**Tested vs not tested:** the login, password-reset, confirmation and admin flows were tested only against a built-in imitation of Supabase and a local PostgreSQL, **not against your real Supabase project** (it was not reachable from the build environment). Real email delivery, your project's email settings and redirect URLs are untested. Tested in Chromium at 360, 768 and 1280 px with automated tests (see Tests). Not tested on a real Android or iOS device, Safari or Firefox, or by actually printing an invoice to PDF.
+
+---
+
+## Accounts and the Admin dashboard
+
+**What goes online:** your email address and sign-up time (held by Supabase Auth), your password (held by Supabase Auth as a hash, never visible to ScopeLens), and one row per successful login (your user id and the time) in the `login_events` table. **Nothing else.** Clients, projects, invoices, payments, agreements, tasks, files and comparisons never leave the browser. This is also disclosed on the sign-up and login pages.
+
+**Pages:** `#/login`, `#/signup`, `#/forgot`, `#/reset-password` (opened from the emailed link), and `#/admin`. Everything else needs login; logged-out visitors are redirected to the login page. Sessions persist across refreshes and restarts until you log out. A refresh never counts as a login; only a successful login (or confirming/reset link) does.
+
+**Who is the administrator:** only the confirmed account `itsumarnext@gmail.com`. There is no admin sign-up. The check happens inside the database (`public.is_admin()` looks the logged-in account up in `auth.users`), and every admin statistic is served by functions that refuse everyone else with "not authorized". Hiding the Admin link and redirecting from `#/admin` in JavaScript is only convenience; a normal user who calls the database directly is refused. `login_events` cannot be read, changed or deleted through the API by anyone; users can only add their own row (at most one per 30 seconds).
+
+**Definitions (calculated in SQL):** Total users = all accounts. Total logins = recorded successful logins. Logins this month / today = in the current calendar month / day in the admin's browser time zone. MAU = different users who logged in this month. Average MAU = mean of MAU over every month from the first recorded login to now (including the current, partial month). New users = accounts created in the period. Returning users = users who logged in on 2 or more different days. Logins from before the migration was run are not counted.
+
+### One-time setup (about 10 minutes)
+
+1. **Run the SQL.** Supabase dashboard → SQL Editor → New query → paste `supabase/migrations/001_auth_analytics.sql` → Run. It is safe to run again.
+2. **Allow the site address.** Authentication → URL Configuration: set *Site URL* to where ScopeLens is hosted (for example `https://yourname.github.io/ScopeLens/`) and add the same address to *Redirect URLs*. Confirmation and reset emails link back here. For local testing also add `http://localhost:8765/index.html`.
+3. **Keep "Confirm email" turned ON** (Authentication → Sign In / Providers → Email). This is required: it stops anyone from claiming the admin address without owning the inbox, and the database also refuses admin access to unconfirmed accounts.
+4. **Create the administrator account first:** open ScopeLens → Create an account with `itsumarnext@gmail.com`, then click the link in the confirmation email. After login an **Admin** item appears in the sidebar.
+5. Optional: Authentication → Email: set a stronger minimum password length and, for real traffic, configure custom SMTP (Supabase's built-in email sender is heavily rate-limited).
+
+Never put a *service role* or *secret* key anywhere in this project. The publishable key in `js/auth/config.js` is meant to be public.
+
+**Tests:** `bash tests/sql-test.sh` (30 checks of the SQL and its security rules on a local PostgreSQL), `node tests/e2e-auth.mjs` (88 browser checks against an in-memory imitation of Supabase). These do **not** talk to your real Supabase project: see "Tested vs not tested" above.
+
 ## 6. Privacy and storage
 
-Where things are kept (all in your browser, nothing is uploaded):
+Where things are kept (all in your browser; the only online data is the login described in "Accounts and the Admin dashboard"):
 
 | Place | Key / name | What it holds |
 |---|---|---|
@@ -123,14 +167,7 @@ Where things are kept (all in your browser, nothing is uploaded):
 - If the browser is full, the change is rolled back and you are told; nothing is half-saved.
 - Settings → Data & Storage: export a JSON backup, import one (checked first; replaces current data after you confirm), or delete everything (type DELETE).
 - **Clearing browser data, private browsing or losing the device can delete your data.** Export backups regularly and keep them private.
-- No analytics, trackers, third-party scripts, fonts or images. The Content-Security-Policy blocks contact with other sites. No API keys exist or are stored. There is no sync between devices.
-
-## 6b. Known limits
-
-- The "AI" is a local word-matching check, not a live AI model. It never claims otherwise and is not legal advice.
-- Reminders and invoices are text/pages you copy or print. ScopeLens never sends email or messages.
-- One currency at a time; light theme only; PDF/Word files can be stored and downloaded but not previewed or searched.
-- Not tested on a physical Android device (tested in Chromium at 360, 768 and 1280 px).
+- No third-party analytics, trackers, scripts, fonts or images. The Content-Security-Policy allows connections to one host only: your Supabase project. Only the public (publishable) key is in the code. There is no sync of business data between devices.
 
 ## 7. Tests (optional, for developers)
 
@@ -141,11 +178,13 @@ node --test tests/workspace.test.mjs     # money, invoices, storage, backup, das
 python3 -m http.server 8765 &
 node tests/e2e.mjs             # classic tool
 node tests/e2e-workspace.mjs   # workspace flows
+node tests/e2e-auth.mjs        # login, sessions, admin gate
+bash tests/sql-test.sh         # database rules (needs local PostgreSQL)
 ```
 
 ## 8. Not included in this version
 
-Accounts, teams, cloud sync, payments, email/chat integrations, recording of any kind, and AI/semantic matching. Version one only compares text that you paste in.
+See "Feature status" above for the full list (no live AI, no email/chat sending, no payment processing, no accounts or sync).
 
 ## Accessibility
 

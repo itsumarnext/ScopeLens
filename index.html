@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <meta name="description" content="ScopeLens is a workspace for freelancers: clients, projects, payments, agreements, tasks and scope-creep checks. Everything stays in your browser.">
   <!-- Privacy: this policy stops the page from contacting any other site. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://yrkvlunvpjmuprlftauy.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>ScopeLens</title>
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/styles.css">
@@ -78,15 +78,17 @@
         <a class="nav-link" href="#/ai" data-nav="ai"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-spark"></use></svg>ScopeLens AI</a>
       </nav>
       <nav class="nav nav-bottom" aria-label="Settings and help">
+        <a class="nav-link" href="#/admin" data-nav="admin" id="admin-link" hidden><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-shield"></use></svg>Admin</a>
         <a class="nav-link" href="#/settings" data-nav="settings"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-gear"></use></svg>Settings</a>
         <a class="nav-link" href="#/help" data-nav="help"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-help"></use></svg>Help &amp; Guide</a>
       </nav>
-      <p class="side-note">Your data is saved only in this browser on this device. Nothing is uploaded.</p>
+      <div class="side-account"><p class="small muted" id="auth-user"></p><button type="button" class="btn btn-block" data-auth-action="logout">Log out</button></div>
+      <p class="side-note">Your business data is saved only in this browser. Only your login email and login times are kept online.</p>
     </aside>
     <div class="scrim no-print" data-action="close-nav" hidden></div>
 
     <main class="main" id="view" tabindex="-1" aria-live="off">
-      <noscript><p class="banner">ScopeLens needs JavaScript to work. It runs only in your browser and sends nothing anywhere.</p></noscript>
+      <noscript><p class="banner">ScopeLens needs JavaScript to work. Your business data stays in your browser.</p></noscript>
       <p class="muted">Loading…</p>
     </main>
   </div>

@@ -521,7 +521,7 @@ export function viewAbout() {
     <section class="card"><h2>Six simple steps</h2>
       <ol class="plain-bullets"><li>Create a project.</li><li>Add the original agreement: what you and your client agreed to do.</li><li>Add each new request from your client.</li><li>Compare the requests with the agreement.</li><li>Review the results. Say if each one is a real change, not a change, or something to ask your client.</li><li>Create a report to talk it through with your client.</li></ol></section>
     <section class="card"><h2>How ScopeLens finds changes</h2>
-      <p class="muted">Everything happens in your browser, with fixed rules. There is no AI, and nothing is uploaded.</p>
+      <p class="muted">Everything happens in your browser, with fixed rules. There is no AI, and no project data is uploaded.</p>
       <ul class="plain-bullets">
         <li><strong>Word changes</strong> compares the words in two texts. It ignores capital letters, punctuation and line breaks, so a tidy-up is not counted as a change.</li>
         <li><strong>Results</strong> split the agreement and the requests into separate points, then match points that share many key words.</li>

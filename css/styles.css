@@ -517,3 +517,34 @@ td .check { margin: 0; }
   body.report-view .banner { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+/* =====================================================================
+   Sign-in pages and Admin dashboard
+   ===================================================================== */
+body.auth-view .sidebar, body.auth-view .topbar, body.auth-view .scrim { display: none !important; }
+body.auth-view .app { padding-left: 0; }
+body.auth-view .main { max-width: none; padding: var(--s6) var(--gutter) var(--s7); }
+body:not(.signed-in) .sidebar .side-account { display: none; }
+.auth-wrap { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s5); }
+.auth-card { display: flex; flex-direction: column; gap: var(--s4); padding: var(--s5); }
+.auth-card h1 { font-size: 1.5rem; }
+.auth-brand { display: inline-flex; align-items: center; gap: var(--s3); font-weight: 700; text-decoration: none; color: var(--text); margin-bottom: var(--s2); }
+.auth-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--s3); font-size: .9375rem; margin: 0; }
+.auth-note { padding: 0 var(--s2); }
+.btn-block { width: 100%; justify-content: center; }
+.check-line { display: flex; align-items: center; gap: var(--s2); font-size: .9375rem; min-height: 32px; cursor: pointer; }
+.check-line input { width: 18px; height: 18px; accent-color: var(--accent); }
+.stack { display: flex; flex-direction: column; gap: var(--s4); }
+.side-account { display: flex; flex-direction: column; gap: var(--s2); padding-top: var(--s4); }
+.side-account p { overflow-wrap: anywhere; margin: 0; }
+.chart-grid-2 { display: grid; gap: var(--s4); grid-template-columns: 1fr; margin: var(--s5) 0; }
+@media (min-width: 1000px) { .chart-grid-2 { grid-template-columns: 1fr 1fr; } }
+.chart-card { display: flex; flex-direction: column; gap: var(--s3); min-width: 0; }
+.chart-card h2 { font-size: 1rem; }
+.chart { width: 100%; height: auto; display: block; }
+.chart-grid { stroke: var(--border); stroke-width: 1; }
+.chart-axis { fill: var(--muted); font-size: 11px; font-family: inherit; }
+.chart-bar { fill: var(--accent); }
+.chart-bar:hover { fill: var(--ink); }
+.chart-line { stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+.chart-dot { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
