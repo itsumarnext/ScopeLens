@@ -76,15 +76,11 @@ export function friendly(err) {
   if (!(err instanceof AuthError)) return 'Something went wrong. Please try again.';
   switch (err.code) {
     case 'network': return err.message;
-    case 'invalid_credentials': return 'The email or password is not correct.';
-    case 'email_not_confirmed': return 'Please confirm your email first. Check your inbox for our message.';
-    case 'user_already_exists': case 'email_exists': return 'An account with this email may already exist. Try logging in or resetting your password.';
-    case 'weak_password': return 'That password is too easy to guess. Use a longer, less common one.';
+    case 'access_denied': return 'Google sign-in was cancelled or not allowed. Please try again.';
+    case 'provider_disabled': case 'validation_failed': return 'Google sign-in is not switched on for this app yet. Please contact the owner.';
+    case 'bad_oauth_state': case 'bad_oauth_callback': case 'oauth_provider_not_supported': return 'Google sign-in could not be completed. Please try again.';
     case 'over_request_rate_limit': case 'over_email_send_rate_limit': case 'over_sms_send_rate_limit': return 'Too many attempts. Please wait a few minutes and try again.';
-    case 'signup_disabled': return 'New sign-ups are turned off right now.';
     case 'user_banned': return 'This account has been disabled.';
-    case 'same_password': return 'Choose a password you have not used before.';
-    case 'validation_failed': return 'Please check the email address and try again.';
     case 'otp_expired': case 'bad_jwt': case 'session_not_found': return 'This link has expired. Please request a new one.';
     default:
       return err.status === 429 ? 'Too many attempts. Please wait a few minutes and try again.' : 'Something went wrong. Please try again.';
@@ -136,23 +132,16 @@ async function recordLogin() {
 
 /* ---------------------------------- actions ---------------------------------- */
 
-export async function signUp(email, password) {
-  const data = await http(`/auth/v1/signup?redirect_to=${redirectTo()}`, { method: 'POST', body: { email, password } });
-  const s = normalize(data);
-  if (s) { save(s); notify(); await recordLogin(); return { status: 'signed-in' }; } // email confirmation is switched off in Supabase
-  // Supabase hides whether an address is already registered: such replies have an empty identities list.
-  if (data && data.identities && data.identities.length === 0) return { status: 'check-email', existing: true };
-  return { status: 'check-email' };
+/**
+ * Starts Google sign-in. This is exactly what supabase.auth.signInWithOAuth({ provider: 'google' })
+ * does in the browser: it sends the visitor to Supabase's /authorize endpoint, which hands them to
+ * Google and then returns here with a session in the address fragment (read by readLinkFragment).
+ * No Google client secret is ever needed or present in this app; it lives only in the Supabase dashboard.
+ */
+export function googleUrl() {
+  return `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo()}`;
 }
-
-export async function signIn(email, password) {
-  const data = await http('/auth/v1/token?grant_type=password', { method: 'POST', body: { email, password } });
-  const s = normalize(data);
-  if (!s) throw new AuthError('unknown', 'Unexpected reply from the server.');
-  save(s); notify();
-  await recordLogin();
-  return s;
-}
+export function signInWithGoogle() { location.assign(googleUrl()); }
 
 export async function signOut() {
   const token = session && session.access_token;
@@ -160,22 +149,7 @@ export async function signOut() {
   if (token) { try { await http('/auth/v1/logout', { method: 'POST', token }); } catch { /* already signed out locally */ } }
 }
 
-export async function resendConfirmation(email) {
-  await http(`/auth/v1/resend?redirect_to=${redirectTo()}`, { method: 'POST', body: { type: 'signup', email } });
-}
-
-export async function requestReset(email) {
-  await http(`/auth/v1/recover?redirect_to=${redirectTo()}`, { method: 'POST', body: { email } });
-}
-
-/** Sets a new password using the temporary token from the emailed link, then signs the user in. */
-export async function setNewPassword(password, token) {
-  await http('/auth/v1/user', { method: 'PUT', token, body: { password } });
-  const user = await http('/auth/v1/user', { token });
-  return { token, user };
-}
-
-/** Finishes sign-in after a verified link (email confirmation or password reset). */
+/** Finishes sign-in after returning from Google: verifies the token with Supabase, saves the session, counts one login. */
 export async function adoptTokens({ access_token, refresh_token, expires_in }) {
   const user = await http('/auth/v1/user', { token: access_token });
   const s = normalize({ access_token, refresh_token, expires_in: Number(expires_in) || 3600, user });
@@ -202,8 +176,10 @@ export async function rpc(name, args = {}) {
   }
 }
 
-/** Parses the #access_token=… part of the link in a confirmation or reset email. */
-export function readLinkFragment(hash) {
+/** Reads what Google/Supabase put in the address when sending the visitor back: #access_token=… or an error (in # or ?). */
+export function readLinkFragment(hash, search = '') {
+  const qs = new URLSearchParams((search || '').replace(/^\?/, ''));
+  if (qs.get('error') || qs.get('error_code')) return { error: qs.get('error_code') || qs.get('error'), description: qs.get('error_description') || '' };
   const h = (hash || '').replace(/^#/, '');
   if (!h || h.startsWith('/')) return null;
   const q = new URLSearchParams(h);

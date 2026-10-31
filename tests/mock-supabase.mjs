@@ -66,32 +66,28 @@ export async function installMock(ctx, st) {
     let body = {}; try { body = JSON.parse(req.postData() || '{}'); } catch { /* none */ }
     st.requests.push({ method: req.method(), path: url.pathname, body: req.postData() || '' });
     const p = url.pathname;
-    if (!h.apikey) return send(401, { message: 'No API key found in request' });
+    if (!h.apikey && p !== '/auth/v1/authorize') return send(401, { message: 'No API key found in request' });
 
-    if (p === '/auth/v1/signup') {
-      const ex = st.users.find((u) => u.email.toLowerCase() === String(body.email).toLowerCase());
-      if (ex) return send(200, { id: uid(st), email: body.email, identities: [] });
-      if (String(body.password || '').length < 6) return send(422, { error_code: 'weak_password', msg: 'Password should be at least 6 characters.' });
-      const u = addUser(st, body.email, body.password, !st.confirmEmail);
-      if (!st.confirmEmail) return send(200, issue(st, u));
-      st.sent.push({ type: 'signup', to: body.email }); return send(200, pub(u));
-    }
-    if (p === '/auth/v1/token' && url.searchParams.get('grant_type') === 'password') {
-      const u = st.users.find((x) => x.email.toLowerCase() === String(body.email).toLowerCase() && x.password === body.password);
-      if (!u) return send(400, { error_code: 'invalid_credentials', msg: 'Invalid login credentials' });
-      if (!u.confirmed) return send(400, { error_code: 'email_not_confirmed', msg: 'Email not confirmed' });
-      return send(200, issue(st, u));
+    if (p === '/auth/v1/authorize') {
+      // What Supabase + Google do: send the visitor to Google, then back to redirect_to with a session in the fragment.
+      st.authorizeCalls = (st.authorizeCalls || 0) + 1;
+      const back = url.searchParams.get('redirect_to') || '';
+      if (url.searchParams.get('provider') !== 'google') return route.fulfill({ status: 302, headers: { ...CORS, location: `${back}#error=invalid_request&error_code=oauth_provider_not_supported&error_description=Unsupported+provider` } });
+      const g = st.google || { error: 'access_denied', description: 'The user cancelled' };
+      if (g.error) return route.fulfill({ status: 302, headers: { ...CORS, location: `${back}#error=${g.error}&error_code=${g.errorCode || g.error}&error_description=${encodeURIComponent(g.description || '')}` } });
+      let u = st.users.find((x) => x.email.toLowerCase() === g.email.toLowerCase());
+      if (!u) u = addUser(st, g.email, null, true);
+      u.confirmed = true;
+      const t = issue(st, u);
+      return route.fulfill({ status: 302, headers: { ...CORS, location: `${back}#access_token=${t.access_token}&refresh_token=${t.refresh_token}&expires_in=3600&token_type=bearer&provider_token=google-token-should-be-ignored` } });
     }
     if (p === '/auth/v1/token' && url.searchParams.get('grant_type') === 'refresh_token') {
       const id = st.tokens.get(body.refresh_token); const u = st.users.find((x) => x.id === id);
       return u ? send(200, issue(st, u)) : send(400, { error_code: 'refresh_token_not_found', msg: 'Invalid Refresh Token' });
     }
-    if (p === '/auth/v1/recover') { st.sent.push({ type: 'recovery', to: body.email }); return send(200, {}); }
-    if (p === '/auth/v1/resend') { st.sent.push({ type: 'signup', to: body.email, again: true }); return send(200, {}); }
     if (p === '/auth/v1/logout') { return send(204); }
     if (p === '/auth/v1/user') {
       const u = bearer(st, h); if (!u) return send(401, { error_code: 'bad_jwt', msg: 'invalid JWT' });
-      if (req.method() === 'PUT') { if (body.password === u.password) return send(422, { error_code: 'same_password', msg: 'same' }); u.password = body.password; }
       return send(200, pub(u));
     }
     if (p === '/rest/v1/login_events' && req.method() === 'POST') {

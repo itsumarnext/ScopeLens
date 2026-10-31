@@ -116,7 +116,7 @@ Both offer a free drag-and-drop style upload of a site folder; at the time of wr
 
 **AI: not integrated.** There is no live AI model (no ChatGPT, Claude or other API) anywhere in the app. "WorkSphare AI" is a local word-matching rule engine (`local-rules-v1`) that runs in your browser. It sorts each client request into covered, possibly outside, outside, or unclear, and drafts a reply from templates. It can miss synonyms, misread context, and is not legal advice. The app says this on every result. It never changes an agreement, price or invoice by itself.
 
-**Accounts and the Admin dashboard:** login, sign-up, password reset, email confirmation and the owner-only Admin dashboard are real and use Supabase Auth. They need the one-time setup below.
+**Accounts and the Admin dashboard:** Google sign-in and the owner-only Admin dashboard are real and use Supabase Auth. They need the one-time setup below.
 
 **Not included (and nothing pretends to be):**
 - Sending email, WhatsApp or SMS. Reminders and invoices are text you copy or pages you print or save as PDF. Nothing is ever "sent".
@@ -126,31 +126,40 @@ Both offer a free drag-and-drop style upload of a site folder; at the time of wr
 - Multiple currencies, dark theme, time zone settings, and automatic backups. Export backups yourself.
 - Uploaded agreement files are not part of the JSON backup.
 
-**Tested vs not tested:** the login, password-reset, confirmation and admin flows were tested only against a built-in imitation of Supabase and a local PostgreSQL, **not against your real Supabase project** (it was not reachable from the build environment). Real email delivery, your project's email settings and redirect URLs are untested. Tested in Chromium at 360, 768 and 1280 px with automated tests (see Tests). Not tested on a real Android or iOS device, Safari or Firefox, or by actually printing an invoice to PDF.
+**Tested vs not tested:** the Google sign-in, sign-out and admin flows were tested only against a built-in imitation of Supabase and Google plus a local PostgreSQL, **not against your real Supabase project or the real Google consent screen** (not reachable from the build environment). Your Google credentials, the Supabase Google provider and redirect URLs are untested. Tested in Chromium at 360, 768 and 1280 px with automated tests (see Tests). Not tested on a real Android or iOS device, Safari or Firefox, or by actually printing an invoice to PDF.
 
 ---
 
-## Accounts and the Admin dashboard
+## Accounts (Google sign-in) and the Admin dashboard
 
-**What goes online:** your email address and sign-up time (held by Supabase Auth), your password (held by Supabase Auth as a hash, never visible to WorkSphare), and one row per successful login (your user id and the time) in the `login_events` table. **Nothing else.** Clients, projects, invoices, payments, agreements, tasks, files and comparisons never leave the browser. This is also disclosed on the sign-up and login pages.
+**Sign-in:** the only way in is **Continue with Google**. There is no email/password form, no sign-up page, no forgot-password page. Opening WorkSphare logged-out shows just that one button; every other page redirects there. A first Google sign-in creates the account automatically. Sessions persist across refreshes and restarts until you log out (sidebar → Log out).
 
-**Pages:** `#/login`, `#/signup`, `#/forgot`, `#/reset-password` (opened from the emailed link), and `#/admin`. Everything else needs login; logged-out visitors are redirected to the login page. Sessions persist across refreshes and restarts until you log out. A refresh never counts as a login; only a successful login (or confirming/reset link) does.
+**How it works:** the button sends the browser to Supabase's `/auth/v1/authorize?provider=google`, which is what `supabase.auth.signInWithOAuth({ provider: 'google' })` does in the browser. Supabase hands over to Google, then returns to WorkSphare with a session, which `js/auth/client.js` verifies with Supabase and saves. WorkSphare has no Supabase JavaScript library (the page's security policy only allows its own scripts), so this one small client in `js/auth/` is the only Supabase client; nothing was duplicated. The Google client secret lives only in the Supabase dashboard. Google's own access token is ignored and never stored.
 
-**Who is the administrator:** only the confirmed account `itsumarnext@gmail.com`. There is no admin sign-up. The check happens inside the database (`public.is_admin()` looks the logged-in account up in `auth.users`), and every admin statistic is served by functions that refuse everyone else with "not authorized". Hiding the Admin link and redirecting from `#/admin` in JavaScript is only convenience; a normal user who calls the database directly is refused. `login_events` cannot be read, changed or deleted through the API by anyone; users can only add their own row (at most one per 30 seconds).
+**What goes online:** the email address of your Google account, when the account was created, and one row per successful sign-in (user id + time) in `login_events`. **Nothing else.** Clients, projects, invoices, payments, agreements, tasks, files and comparisons never leave the browser. This is disclosed on the sign-in screen. A page refresh never counts as a login.
 
-**Definitions (calculated in SQL):** Total users = all accounts. Total logins = recorded successful logins. Logins this month / today = in the current calendar month / day in the admin's browser time zone. MAU = different users who logged in this month. Average MAU = mean of MAU over every month from the first recorded login to now (including the current, partial month). New users = accounts created in the period. Returning users = users who logged in on 2 or more different days. Logins from before the migration was run are not counted.
+**Administrator:** only the Google account `itsumarnext@gmail.com` (its email must be verified, which Google accounts are). The check runs inside the database (`public.is_admin()`), and every admin statistic is served by functions that refuse everyone else with "not authorized". Hiding the Admin link and redirecting from `#/admin` is only convenience; a normal user who calls the database directly is refused. `login_events` cannot be read, changed or deleted through the API; users can only add their own row (at most one per 30 seconds). There is no admin sign-up.
 
-### One-time setup (about 10 minutes)
+**Definitions (calculated in SQL):** Total users = all accounts. Total logins = recorded successful sign-ins. Logins this month / today = current calendar month / day in the admin's browser time zone. MAU = different users who signed in this month. Average MAU = mean MAU over every month from the first recorded login to now (including the current, partial month). New users = accounts created in the period. Returning users = users who signed in on 2 or more different days. Sign-ins from before the migration was run are not counted.
 
-1. **Run the SQL.** Supabase dashboard → SQL Editor → New query → paste `supabase/migrations/001_auth_analytics.sql` → Run. It is safe to run again.
-2. **Allow the site address.** Authentication → URL Configuration: set *Site URL* to where WorkSphare is hosted (for example `https://yourname.github.io/WorkSphare/`) and add the same address to *Redirect URLs*. Confirmation and reset emails link back here. For local testing also add `http://localhost:8765/index.html`.
-3. **Keep "Confirm email" turned ON** (Authentication → Sign In / Providers → Email). This is required: it stops anyone from claiming the admin address without owning the inbox, and the database also refuses admin access to unconfirmed accounts.
-4. **Create the administrator account first:** open WorkSphare → Create an account with `itsumarnext@gmail.com`, then click the link in the confirmation email. After login an **Admin** item appears in the sidebar.
-5. Optional: Authentication → Email: set a stronger minimum password length and, for real traffic, configure custom SMTP (Supabase's built-in email sender is heavily rate-limited).
+**People who used the old email/password login:** their saved sessions keep working until they log out or the session ends. After that they sign in with Google. If their account email is a Google address, Supabase links it to the same account automatically (same user, same history). Accounts on non-Google emails can no longer sign in.
 
-Never put a *service role* or *secret* key anywhere in this project. The publishable key in `js/auth/config.js` is meant to be public.
+### One-time setup (about 15 minutes)
 
-**Tests:** `bash tests/sql-test.sh` (30 checks of the SQL and its security rules on a local PostgreSQL), `node tests/e2e-auth.mjs` (88 browser checks against an in-memory imitation of Supabase). These do **not** talk to your real Supabase project: see "Tested vs not tested" above.
+1. **Run the SQL** (first time only). Supabase dashboard → SQL Editor → paste `supabase/migrations/001_auth_analytics.sql` → Run. Safe to re-run.
+2. **Create Google credentials.** Google Cloud Console → APIs & Services → OAuth consent screen (set the app name "WorkSphare", your support email; add yourself as a test user while it is in *Testing*, or publish it). Then Credentials → Create credentials → **OAuth client ID** → Application type **Web application** → under *Authorized redirect URIs* add exactly:
+   `https://yrkvlunvpjmuprlftauy.supabase.co/auth/v1/callback`
+   Copy the **Client ID** and **Client secret**.
+3. **Turn Google on in Supabase.** Authentication → Sign In / Providers → **Google** → enable → paste the Client ID and Client secret → Save. (The secret goes here only, never into this project's files.)
+4. **Allow your site address.** Authentication → URL Configuration: set *Site URL* to where WorkSphare is hosted (for example `https://yourname.github.io/WorkSphare/`) and add the same address under *Redirect URLs*. For local testing also add `http://localhost:8765/index.html`. The address must match the page where you open the app (including `index.html` if the host serves it that way).
+5. **Switch off email/password sign-up** so Google is the only door: Authentication → Sign In / Providers → **Email** → disable. (Otherwise the hidden API would still accept password sign-ups. The admin account cannot be taken over this way either, because the admin check needs a confirmed email address, but turning it off is cleaner.)
+6. Open WorkSphare, press **Continue with Google** with `itsumarnext@gmail.com`. An **Admin** item appears in the sidebar.
+
+Never put a *service role* key, a *secret* key or the Google client secret in this project. The publishable key in `js/auth/config.js` is meant to be public.
+
+**Troubleshooting:** "Google sign-in is not switched on" means step 3 is missing. A Google page saying *redirect_uri_mismatch* means step 2's redirect URI is not exactly the Supabase callback address. Coming back to a different address than expected means step 4.
+
+**Tests:** `bash tests/sql-test.sh` (30 checks of the SQL and its security rules on a local PostgreSQL) and `node tests/e2e-auth.mjs` (80 browser checks against an in-memory imitation of Supabase and Google). These do **not** talk to your real Supabase or Google: the real consent screen, your Google credentials and your redirect settings are untested until you complete the setup and try it once.
 
 ## 6. Privacy and storage
 
@@ -178,7 +187,7 @@ node --test tests/workspace.test.mjs     # money, invoices, storage, backup, das
 python3 -m http.server 8765 &
 node tests/e2e.mjs             # classic tool
 node tests/e2e-workspace.mjs   # workspace flows
-node tests/e2e-auth.mjs        # login, sessions, admin gate
+node tests/e2e-auth.mjs        # Google sign-in, sessions, admin gate
 bash tests/sql-test.sh         # database rules (needs local PostgreSQL)
 ```
 

@@ -553,3 +553,15 @@ body:not(.signed-in) .sidebar .side-account { display: none; }
 .brand-logo { display: block; height: 34px; width: auto; max-width: 100%; }
 .auth-brand .brand-logo { height: 44px; }
 .topbar .brand-logo { height: 30px; }
+
+/* Google-only sign-in screen */
+.auth-center { align-items: center; text-align: center; gap: var(--s5); padding: var(--s6) var(--s5); }
+.auth-center .sub { max-width: 34ch; margin: 0; }
+.auth-center h1 { font-size: 1.625rem; }
+.auth-logo { height: 52px; margin: 0 auto var(--s2); }
+.auth-center [data-auth-flash] { width: 100%; text-align: left; }
+.auth-center [data-auth-flash]:empty { display: none; }
+.btn-google { min-height: 52px; gap: var(--s3); font-size: 1.0625rem; font-weight: 600; background: #fff; color: var(--text); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); }
+.btn-google:hover:not(:disabled) { background: var(--surface); border-color: var(--ink); }
+.btn-google:disabled { opacity: .7; cursor: progress; }
+.g-logo { flex: none; }

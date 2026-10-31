@@ -1,32 +1,30 @@
 // index.js — session gate, auth page handlers and Admin routing.
-import { toast, showFieldErrors, readForm } from '../ui.js';
+import { toast } from '../ui.js';
 import * as C from './client.js';
 import * as V from './views.js';
 import * as A from './admin.js';
-import { MIN_PASSWORD } from './config.js';
 
-const AUTH_PAGES = ['login', 'signup', 'forgot', 'check-email'];
+const AUTH_PAGES = ['login'];
+const RETIRED_PAGES = ['signup', 'forgot', 'check-email', 'reset-password']; // email/password pages no longer exist
 const NEXT_KEY = 'scopelens_next';
-let recovery = null;        // tokens from a password-reset link (memory only)
 let flash = null;           // one message shown on the next auth page
 let adminKnown = null;      // null = unknown, true/false after the database answered
-let mailNote = { addr: '', kind: 'signup' };
 let rerender = () => {};
 
 const first = (parts) => (parts[0] || '').split('?')[0];
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /* ------------------------------------ start ----------------------------------- */
 
 export async function init(onRoute) {
   rerender = onRoute;
-  const frag = C.readLinkFragment(location.hash);
+  const frag = C.readLinkFragment(location.hash, location.search);
   if (frag) {
-    history.replaceState(null, '', location.pathname + location.search); // never leave tokens in the address bar
-    if (frag.error) { flash = { error: true, text: 'That link is invalid or has expired. Please request a new one.' }; location.hash = '#/login'; }
-    else if (frag.type === 'recovery') { recovery = frag; location.hash = '#/reset-password'; }
-    else {
-      try { await C.adoptTokens(frag); flash = { text: 'Your email is confirmed. Welcome to WorkSphare.' }; location.hash = '#/'; }
+    history.replaceState(null, '', location.pathname); // never leave tokens or error details in the address bar
+    if (frag.error) { flash = { error: true, text: C.friendly(new C.AuthError(frag.error, frag.description)) }; location.hash = '#/login'; }
+    else if (frag.type === 'recovery' || frag.type === 'signup' || frag.type === 'invite' || frag.type === 'email_change' || frag.type === 'magiclink') {
+      flash = { error: true, text: 'Email links are no longer used. Please continue with Google.' }; location.hash = '#/login';
+    } else {
+      try { await C.adoptTokens(frag); flash = null; location.hash = takeNext(); }
       catch (e) { flash = { error: true, text: C.friendly(e) }; location.hash = '#/login'; }
     }
   }
@@ -71,12 +69,9 @@ export async function guard(parts) {
   const signedIn = C.isSignedIn();
   chrome();
 
-  if (page === 'reset-password') {
-    if (!recovery) return { redirect: signedIn ? '#/' : '#/login' };
-    return { html: V.resetPassword(), title: 'New password', auth: true };
-  }
+  if (RETIRED_PAGES.includes(page)) return { redirect: signedIn ? '#/' : '#/login' };
   if (!signedIn) {
-    if (AUTH_PAGES.includes(page)) return { html: pageHtml(page), title: titleFor(page), auth: true };
+    if (AUTH_PAGES.includes(page)) return { html: V.login(), title: 'Sign in', auth: true };
     try { sessionStorage.setItem(NEXT_KEY, location.hash || '#/'); } catch { /* ignore */ }
     return { redirect: '#/login' };
   }
@@ -90,14 +85,6 @@ function takeNext() {
   try { n = sessionStorage.getItem(NEXT_KEY) || '#/'; sessionStorage.removeItem(NEXT_KEY); } catch { /* ignore */ }
   return /^#\/(?!login|signup|forgot|check-email|reset-password)/.test(n) || n === '#/' ? n : '#/';
 }
-const titleFor = (p) => ({ login: 'Log in', signup: 'Create account', forgot: 'Reset password', 'check-email': 'Check your email' }[p] || 'Account');
-function pageHtml(p) {
-  if (p === 'signup') return V.signup();
-  if (p === 'forgot') return V.forgot();
-  if (p === 'check-email') return V.checkEmail(mailNote.addr, mailNote.kind);
-  return V.login();
-}
-
 async function adminPage() {
   // The database decides. If it says no (or cannot answer), the user is sent to the normal app.
   let ok = false;
@@ -119,102 +106,36 @@ export function afterRender(parts) {
   if (!document.querySelector('.auth-card')) return;
   const box = document.querySelector('[data-auth-flash]');
   if (flash && box) { box.innerHTML = `<p class="${flash.error ? 'form-error' : 'banner'}" role="${flash.error ? 'alert' : 'status'}">${flash.text.replace(/[<>&]/g, '')}</p>`; flash = null; }
-  if (page === 'login' || page === 'signup' || page === 'forgot') document.getElementById('au-email')?.focus({ preventScroll: true });
-  if (page === 'reset-password') document.getElementById('au-password')?.focus({ preventScroll: true });
+  if (page === 'login') document.querySelector('[data-auth-action="google"]')?.focus({ preventScroll: true });
 }
 
 /* ---------------------------------- handlers ---------------------------------- */
 
-function busy(form, on) {
-  const b = form.querySelector('button[type=submit]');
-  if (!b) return;
-  if (on) { b.dataset.label = b.textContent; b.textContent = b.dataset.busyLabel || 'Please wait…'; b.disabled = true; form.setAttribute('aria-busy', 'true'); }
-  else { b.textContent = b.dataset.label || b.textContent; b.disabled = false; form.removeAttribute('aria-busy'); }
+function startGoogle(btn) {
+  btn.dataset.label = btn.querySelector('span').textContent;
+  btn.querySelector('span').textContent = btn.dataset.busyLabel || 'Opening Google…';
+  btn.disabled = true; btn.setAttribute('aria-busy', 'true');
+  try { C.signInWithGoogle(); } catch (err) { console.error(err); resetGoogle(btn); showError('Could not start Google sign-in. Please try again.'); }
 }
-function passwordErrors(pw, confirm, email = '') {
-  const e = {};
-  if (!pw) e.password = 'Enter a password.';
-  else if (pw.length < MIN_PASSWORD) e.password = `Use at least ${MIN_PASSWORD} characters.`;
-  else if (email && pw.toLowerCase() === email.toLowerCase()) e.password = 'The password should not be your email address.';
-  if (confirm !== undefined && !e.password && pw !== confirm) e.confirm = 'The two passwords do not match.';
-  return e;
+function resetGoogle(btn) {
+  if (!btn || !btn.dataset.label) return;
+  btn.querySelector('span').textContent = btn.dataset.label; btn.disabled = false; btn.removeAttribute('aria-busy');
 }
-
-const FORMS = {
-  async login(form) {
-    const { email, password } = readForm(form);
-    const e = {};
-    if (!email.trim()) e.email = 'Enter your email.'; else if (!EMAIL_RE.test(email.trim())) e.email = 'Enter a valid email address.';
-    if (!password) e.password = 'Enter your password.';
-    showFieldErrors(form, e); if (Object.keys(e).length) return;
-    busy(form, true);
-    try { await C.signIn(email.trim(), password); location.hash = takeNext(); rerender(); }
-    catch (err) {
-      showFieldErrors(form, { _form: C.friendly(err) });
-      const extra = form.querySelector('[data-auth-extra]');
-      if (extra) extra.innerHTML = err.code === 'email_not_confirmed' ? `<button type="button" class="btn" data-auth-action="resend" data-email="${email.trim().replace(/"/g, '')}">Send the confirmation email again</button>` : '';
-    } finally { busy(form, false); }
-  },
-  async signup(form) {
-    const { email, password, confirm } = readForm(form);
-    const e = passwordErrors(password, confirm, email.trim());
-    if (!email.trim()) e.email = 'Enter your email.'; else if (!EMAIL_RE.test(email.trim())) e.email = 'Enter a valid email address.';
-    showFieldErrors(form, e); if (Object.keys(e).length) return;
-    busy(form, true);
-    try {
-      const r = await C.signUp(email.trim(), password);
-      if (r.status === 'signed-in') { location.hash = '#/'; rerender(); }
-      else { mailNote = { addr: email.trim(), kind: 'signup' }; location.hash = '#/check-email'; rerender(); }
-    } catch (err) { showFieldErrors(form, { _form: C.friendly(err) }); } finally { busy(form, false); }
-  },
-  async forgot(form) {
-    const { email } = readForm(form);
-    const e = {};
-    if (!email.trim()) e.email = 'Enter your email.'; else if (!EMAIL_RE.test(email.trim())) e.email = 'Enter a valid email address.';
-    showFieldErrors(form, e); if (Object.keys(e).length) return;
-    busy(form, true);
-    try { await C.requestReset(email.trim()); mailNote = { addr: email.trim(), kind: 'reset' }; location.hash = '#/check-email'; rerender(); }
-    catch (err) { showFieldErrors(form, { _form: C.friendly(err) }); } finally { busy(form, false); }
-  },
-  async reset(form) {
-    const { password, confirm } = readForm(form);
-    const e = passwordErrors(password, confirm);
-    showFieldErrors(form, e); if (Object.keys(e).length) return;
-    if (!recovery) { location.hash = '#/login'; return; }
-    busy(form, true);
-    try {
-      await C.setNewPassword(password, recovery.access_token);
-      await C.adoptTokens(recovery);
-      recovery = null; flash = { text: 'Your password was changed.' };
-      location.hash = '#/'; rerender(); toast('Password changed. You are logged in.');
-    } catch (err) {
-      showFieldErrors(form, { _form: C.friendly(err) });
-      if (err.code === 'otp_expired' || err.status === 401) { recovery = null; }
-    } finally { busy(form, false); }
-  },
-};
+function showError(text) {
+  const box = document.querySelector('[data-auth-flash]');
+  if (box) box.innerHTML = `<p class="form-error" role="alert">${text.replace(/[<>&]/g, '')}</p>`;
+}
 
 export function bind() {
-  document.addEventListener('submit', async (e) => {
-    const form = e.target.closest('form[data-auth-form]');
-    if (!form) return;
-    e.preventDefault();
-    try { await FORMS[form.dataset.authForm](form); } catch (err) { console.error(err); showFieldErrors(form, { _form: 'Something went wrong. Please try again.' }); busy(form, false); }
-  });
-  document.addEventListener('change', (e) => {
-    if (e.target.matches('[data-auth-toggle]')) e.target.closest('form').querySelectorAll('input[type=password],input[data-pw]').forEach((i) => { i.type = e.target.checked ? 'text' : 'password'; i.dataset.pw = '1'; });
-  });
+  // Coming back with the back button can restore the page with the button still "busy".
+  window.addEventListener('pageshow', (e) => { if (e.persisted) document.querySelectorAll('[data-auth-action="google"]').forEach(resetGoogle); });
   document.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-auth-action],[data-admin-action]');
     if (!b) return;
+    if (b.dataset.authAction === 'google') { startGoogle(b); return; }
     if (b.dataset.authAction === 'logout') {
       try { sessionStorage.removeItem(NEXT_KEY); } catch { /* ignore */ }
       await C.signOut(); toast('You are logged out.'); return;
-    }
-    if (b.dataset.authAction === 'resend') {
-      b.disabled = true;
-      try { await C.resendConfirmation(b.dataset.email); toast('Email sent. Check your inbox.'); } catch (err) { toast(C.friendly(err), { error: true }); }
-      setTimeout(() => { b.disabled = false; }, 15000); return;
     }
     if (b.dataset.adminAction === 'refresh') { rerender(); }
   });

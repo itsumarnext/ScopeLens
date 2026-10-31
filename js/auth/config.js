@@ -2,4 +2,3 @@
 // Row Level Security allows. NEVER put a service-role or "secret" key in this folder.
 export const SUPABASE_URL = 'https://yrkvlunvpjmuprlftauy.supabase.co';
 export const SUPABASE_KEY = 'sb_publishable_kS6d1CO12IPl-zYpO4PPbw_VAyS6uY3';
-export const MIN_PASSWORD = 8;
